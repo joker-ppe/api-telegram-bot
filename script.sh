@@ -41,4 +41,7 @@ sudo chmod 666 /var/run/docker.sock
 docker-compose --version
 
 # build docker-compose
+sudo docker stop $(docker ps -a -q)
+sudo docker rm $(docker ps -a -q)
+sudo docker rmi -f $(docker images -aq)
 sudo docker-compose up -d
