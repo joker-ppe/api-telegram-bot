@@ -135,6 +135,3 @@ ALTER TABLE "histories" ADD CONSTRAINT "histories_scheduleId_fkey" FOREIGN KEY (
 
 
 
-INSERT INTO "keys" ("name","key","updatedAt") VALUES ('api_key_device', 'InVMJN87fOOSvcI15qYnTRDj2YYe8hxH',CURRENT_TIMESTAMP);
-
-INSERT INTO "keys" ("name","key","updatedAt") VALUES ('JWT_SECRET', 'Pass in 2023. Joker key @#@$#@$&^*&^',CURRENT_TIMESTAMP);

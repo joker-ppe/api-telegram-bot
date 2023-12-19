@@ -29,3 +29,10 @@ model Key {
   @@map("keys")
 }
 
+model Data {
+  date String @id
+  data String
+
+  @@map("data")
+}
+
