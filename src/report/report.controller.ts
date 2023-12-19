@@ -12,7 +12,13 @@ export class ReportController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Query('userCode') userCode: string,
+    @Query('userName') userName: string,
   ) {
-    return await this.reportService.getWinLose(startDate, endDate, userCode);
+    return await this.reportService.getWinLose(
+      startDate,
+      endDate,
+      userCode,
+      userName,
+    );
   }
 }

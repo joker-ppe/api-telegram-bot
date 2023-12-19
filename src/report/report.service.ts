@@ -18,7 +18,12 @@ export class ReportService implements OnModuleInit {
     this.apiKey = await this.getApiKeyFromDatabase();
   }
 
-  async getWinLose(startDate: string, endDate: string, userCode: string) {
+  async getWinLose(
+    startDate: string,
+    endDate: string,
+    userCode: string,
+    userName: string,
+  ) {
     const uniqueDatesSearch = this.generateDateRange(startDate, endDate);
     console.log(uniqueDatesSearch);
 
@@ -131,7 +136,7 @@ export class ReportService implements OnModuleInit {
       //   return listAdmins;
       console.log('userCode: ' + userCode);
 
-      const user = this.findUser(listAdmins, userCode);
+      const user = this.findUser(listAdmins, userCode, userName);
       if (user) {
         return user;
       }
@@ -142,25 +147,35 @@ export class ReportService implements OnModuleInit {
     }
   }
 
-  private findUser(listAdmins: User[], userCode: string): User | undefined {
+  private findUser(
+    listAdmins: User[],
+    userCode: string,
+    userName: string,
+  ): User | undefined {
     for (const admin of listAdmins) {
-      if (admin.username === userCode) {
+      if (admin.username === userCode || admin.full_name === userName) {
         return admin;
       }
       for (const superAdmin of admin.children) {
-        if (superAdmin.username === userCode) {
+        if (
+          superAdmin.username === userCode ||
+          superAdmin.full_name === userName
+        ) {
           return superAdmin;
         }
         for (const master of superAdmin.children) {
-          if (master.username === userCode) {
+          if (master.username === userCode || master.full_name === userName) {
             return master;
           }
           for (const agent of master.children) {
-            if (agent.username === userCode) {
+            if (agent.username === userCode || agent.full_name === userName) {
               return agent;
             }
             for (const member of agent.children) {
-              if (member.username === userCode) {
+              if (
+                member.username === userCode ||
+                member.full_name === userName
+              ) {
                 return member;
               }
             }
