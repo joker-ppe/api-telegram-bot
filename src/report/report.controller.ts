@@ -13,4 +13,9 @@ export class ReportController {
   GetWinLoseToday() {
     return 0;
   }
+
+  @Get('win_lose_yesterday')
+  GetWinLoseYesterday() {
+    return 0;
+  }
 }
