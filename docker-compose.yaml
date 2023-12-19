@@ -1,0 +1,37 @@
+version: '3.9'
+
+services:
+  jk-database:
+    image: postgres:16.0
+    volumes:
+      - jk_data:/var/lib/postgresql/data
+    container_name: jk-database
+    ports:
+      - 5432:5432 #{port in host(myPC)} : {port in Container}
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dbKey6868Mhz
+      POSTGRES_DB: thesisdb
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - jk-nestjs-network
+  jk-api:
+    # image: voixmomotalk/nestjs-thesis-api:1.0.0
+    build: .
+    container_name: jk-api
+    ports:
+      - 3004:3004
+    depends_on:
+      jk-database:
+        condition: service_healthy
+    networks:
+      - jk-nestjs-network
+networks:
+  jk-nestjs-network:
+    driver: bridge
+volumes:
+  jk_data:
