@@ -7,7 +7,7 @@ import { ReportService } from './report.service';
 export class ReportController {
   constructor(private reportService: ReportService) {}
 
-  @Get('win_lose_this_week')
+  @Get()
   async GetWinLose(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
