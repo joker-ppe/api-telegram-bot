@@ -1,5 +1,5 @@
 #!/bin/bash
-rm -r nestjs-api-thesis/
+rm -r api-telegram-bot/
 
 # open port
 sudo ufw enable
@@ -9,6 +9,8 @@ sudo ufw allow 22/tcp
 sudo ufw allow 5432
 
 sudo ufw allow 3004
+
+sudo ufw allow 8080
 
 sudo ufw allow ssh
 
@@ -45,3 +47,5 @@ sudo docker stop $(docker ps -a -q)
 sudo docker rm $(docker ps -a -q)
 sudo docker rmi -f $(docker images -aq)
 sudo docker-compose up -d
+
+sudo docker run -p 8080:8080 -p 50000:50000 -v jenkins_home:/var/jenkins_home jenkins/jenkins:lts-jdk17

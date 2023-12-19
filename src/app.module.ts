@@ -4,6 +4,7 @@ import { UserModule } from './user/user.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 // import { ScheduleController } from './schedule/schedule.controller';
+import { ReportModule } from './report/report.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ConfigModule } from '@nestjs/config';
       isGlobal: true,
       // envFilePath: `.env.${process.env.NODE_ENV}`,
     }),
+    ReportModule,
   ],
   // controllers: [DayController, SlotController, HistoryController],
   // providers: [DayService, SlotService, HistoryService],
