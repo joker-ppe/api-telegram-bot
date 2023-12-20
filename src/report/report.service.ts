@@ -139,11 +139,16 @@ export class ReportService implements OnModuleInit {
       const user = this.findUser(listAdmins, userCode, userName);
       if (user) {
         user.children.length = 0;
+
+        console.log(user);
+
         return JSON.stringify(user);
       }
 
+      console.log('Not found');
       throw new NotFoundException('Not found');
     } else {
+      console.log('Not found data source');
       throw new NotFoundException('Not found data source');
     }
   }
