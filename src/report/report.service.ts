@@ -28,15 +28,29 @@ export class ReportService implements OnModuleInit {
     console.log(uniqueDatesSearch);
 
     const currentDate = new Date();
-    const todayString = `Current date: ${currentDate.getFullYear()}-${
-      currentDate.getMonth() + 1
-    }-${currentDate.getDate()} ${currentDate.getHours()}:${currentDate.getMinutes()}:${currentDate.getSeconds()}`;
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Bangkok',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+    const formattedDate = formatter.format(currentDate);
 
-    console.log(todayString);
+    const parts = formatter.formatToParts(currentDate);
 
-    const currentDateString = `${currentDate.getFullYear()}-${
-      currentDate.getMonth() + 1
-    }-${currentDate.getDate()}`;
+    const year = parts.find((part) => part.type === 'year').value;
+    const month = parts.find((part) => part.type === 'month').value;
+    const day = parts.find((part) => part.type === 'day').value;
+    const hour = parts.find((part) => part.type === 'hour').value;
+    const minute = parts.find((part) => part.type === 'minute').value;
+
+    console.log(`Current date: ${formattedDate}`);
+
+    const currentDateString = `${year}-${month}-${day}`;
 
     let betFullData: BetItem[] = [];
     for (let i = 0; i < uniqueDatesSearch.length; i++) {
@@ -58,14 +72,14 @@ export class ReportService implements OnModuleInit {
 
       if (date === currentDateString) {
         if (!dataDate.data || dataDate.data === 'null') {
-          // console.log(`${currentDate.getHours()} - ${currentDate.getMinutes()}`);
+          // console.log(`${hour} - ${minute}`);
 
           const betData = await this.getBetData(date, date);
           dataDate.data = JSON.stringify(betData);
 
           if (
-            (currentDate.getHours() === 18 && currentDate.getMinutes() > 40) ||
-            currentDate.getHours() > 18
+            (parseInt(hour) === 18 && parseInt(minute) > 40) ||
+            parseInt(hour) > 18
           ) {
             if (hasData) {
               await this.prismaService.data.update({
@@ -140,7 +154,7 @@ export class ReportService implements OnModuleInit {
       if (user) {
         user.children.length = 0;
 
-        console.log(user);
+        console.log(user.full_name);
 
         return JSON.stringify(user);
       }
