@@ -234,7 +234,6 @@ export class ReportService implements OnModuleInit {
       }
     } catch (error) {
       console.error('Error loading data:', error);
-      alert('Mạng đểu rồi. Load lại trang đi sếp');
       return null; // Or handle this error as needed
     } finally {
     }
@@ -306,7 +305,7 @@ export class ReportService implements OnModuleInit {
           `Không khớp số lượng bet data: betData: ${betData.length} - rowCount: ${rowCount}`,
         );
 
-        alert(`Có lỗi xảy ra. Load lại trang`);
+        // alert(`Có lỗi xảy ra. Load lại trang`);
 
         return null; // Or handle this case as needed
       }
@@ -329,8 +328,6 @@ export class ReportService implements OnModuleInit {
       return data;
     } catch (error) {
       console.error('Error loading data:', error);
-
-      alert('Mở VPN, đợi 2p rồi load lại trang nha sếp');
 
       return null; // return null or handle error as needed
     } finally {
