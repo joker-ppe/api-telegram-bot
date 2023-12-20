@@ -138,6 +138,7 @@ export class ReportService implements OnModuleInit {
 
       const user = this.findUser(listAdmins, userCode, userName);
       if (user) {
+        user.children.length = 0;
         return JSON.stringify(user);
       }
 
