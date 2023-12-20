@@ -9,23 +9,36 @@ export class ReportController {
   constructor(private reportService: ReportService) {}
 
   @Get()
-  async GetWinLose(@Res() response: Response) {
-    response.type('application/json');
-    return response.send({ message: 'Success' });
-  }
-
-  @Get('user')
-  async GetWinLoseTest(
+  async GetWinLose(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Query('userCode') userCode: string,
     @Query('userName') userName: string,
+    @Res() response: Response,
   ) {
-    return await this.reportService.getWinLose(
-      startDate,
-      endDate,
-      userCode,
-      userName,
+    response.type('application/json');
+    return response.send(
+      await this.reportService.getWinLose(
+        startDate,
+        endDate,
+        userCode,
+        userName,
+      ),
     );
   }
+
+  //   @Get('user')
+  //   async GetWinLoseTest(
+  //     @Query('startDate') startDate: string,
+  //     @Query('endDate') endDate: string,
+  //     @Query('userCode') userCode: string,
+  //     @Query('userName') userName: string,
+  //   ) {
+  //     return await this.reportService.getWinLose(
+  //       startDate,
+  //       endDate,
+  //       userCode,
+  //       userName,
+  //     );
+  //   }
 }
