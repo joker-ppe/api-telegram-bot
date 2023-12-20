@@ -21,4 +21,9 @@ export class ReportController {
       userName,
     );
   }
+
+  @Get('t')
+  async GetWinLoseTest() {
+    return 0;
+  }
 }
