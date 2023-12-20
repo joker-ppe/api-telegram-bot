@@ -8,7 +8,7 @@ import { Response } from 'express';
 export class ReportController {
   constructor(private reportService: ReportService) {}
 
-  @Get('user')
+  @Get()
   async GetWinLose(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
@@ -28,7 +28,17 @@ export class ReportController {
   }
 
   @Get('t')
-  async GetWinLoseTest() {
-    return 0;
+  async GetWinLoseTest(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Query('userCode') userCode: string,
+    @Query('userName') userName: string,
+  ) {
+    return await this.reportService.getWinLose(
+      startDate,
+      endDate,
+      userCode,
+      userName,
+    );
   }
 }
