@@ -138,7 +138,7 @@ export class ReportService implements OnModuleInit {
 
       const user = this.findUser(listAdmins, userCode, userName);
       if (user) {
-        return user;
+        return JSON.stringify(user);
       }
 
       throw new NotFoundException('Not found');
