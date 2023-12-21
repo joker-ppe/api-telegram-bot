@@ -184,7 +184,7 @@ export class ReportService implements OnModuleInit {
 
     let superAdmin: User[] = admin.children;
     superAdmin = superAdmin.filter(
-      (sup) => sup.profit !== 0 && sup.outstanding !== 0,
+      (sup) => sup.profit !== 0 || sup.outstanding !== 0,
     );
     superAdmin.sort((a, b) => (a.profit > b.profit ? -1 : 1));
 
@@ -203,7 +203,7 @@ export class ReportService implements OnModuleInit {
       masters = masters.concat(sup.children);
     });
     masters = masters.filter(
-      (master) => master.profit !== 0 && master.outstanding !== 0,
+      (master) => master.profit !== 0 || master.outstanding !== 0,
     );
     masters.sort((a, b) => (a.profit > b.profit ? -1 : 1));
     return JSON.stringify(masters);
@@ -222,7 +222,7 @@ export class ReportService implements OnModuleInit {
       });
     });
     agents = agents.filter(
-      (agent) => agent.profit !== 0 && agent.outstanding !== 0,
+      (agent) => agent.profit !== 0 || agent.outstanding !== 0,
     );
     agents.sort((a, b) => (a.profit > b.profit ? -1 : 1));
     return JSON.stringify(agents);
@@ -243,7 +243,7 @@ export class ReportService implements OnModuleInit {
       });
     });
     members = members.filter(
-      (member) => member.profit !== 0 && member.outstanding !== 0,
+      (member) => member.profit !== 0 || member.outstanding !== 0,
     );
     members.sort((a, b) => (a.profit > b.profit ? -1 : 1));
     return JSON.stringify(members);
