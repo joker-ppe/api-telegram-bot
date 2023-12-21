@@ -12,33 +12,72 @@ export class ReportController {
   async GetWinLose(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
-    @Query('userCode') userCode: string,
     @Query('userName') userName: string,
     @Res() response: Response,
   ) {
-    response.type('application/json');
+    response.setHeader('Content-Type', 'application/json');
     return response.send(
-      await this.reportService.getWinLose(
-        startDate,
-        endDate,
-        userCode,
-        userName,
-      ),
+      await this.reportService.getWinLose(startDate, endDate, userName),
     );
   }
 
-  //   @Get('user')
-  //   async GetWinLoseTest(
-  //     @Query('startDate') startDate: string,
-  //     @Query('endDate') endDate: string,
-  //     @Query('userCode') userCode: string,
-  //     @Query('userName') userName: string,
-  //   ) {
-  //     return await this.reportService.getWinLose(
-  //       startDate,
-  //       endDate,
-  //       userCode,
-  //       userName,
-  //     );
-  //   }
+  @Get('bidOutside')
+  async GetBidOutSide(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+    return response.send(
+      await this.reportService.getTotalOutsideBid(startDate, endDate),
+    );
+  }
+
+  @Get('supers')
+  async GetSupers(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+    return response.send(
+      await this.reportService.getSupers(startDate, endDate),
+    );
+  }
+
+  @Get('masters')
+  async GetMasters(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+    return response.send(
+      await this.reportService.getMasters(startDate, endDate),
+    );
+  }
+
+  @Get('agents')
+  async GetAgents(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+    return response.send(
+      await this.reportService.getAgents(startDate, endDate),
+    );
+  }
+
+  @Get('members')
+  async GetMembers(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+    return response.send(
+      await this.reportService.getMembers(startDate, endDate),
+    );
+  }
 }

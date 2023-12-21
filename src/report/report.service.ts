@@ -18,12 +18,7 @@ export class ReportService implements OnModuleInit {
     this.apiKey = await this.getApiKeyFromDatabase();
   }
 
-  async getWinLose(
-    startDate: string,
-    endDate: string,
-    userCode: string,
-    userName: string,
-  ) {
+  async getWinLose(startDate: string, endDate: string, userName: string) {
     const uniqueDatesSearch = this.generateDateRange(startDate, endDate);
     console.log(uniqueDatesSearch);
 
@@ -148,11 +143,11 @@ export class ReportService implements OnModuleInit {
 
       //   let user: User = null;
       //   return listAdmins;
-      console.log('userCode: ' + userCode);
+      console.log('userCode: ' + userName);
 
-      const user = this.findUser(listAdmins, userCode, userName);
+      const user = this.findUser(listAdmins, userName);
       if (user) {
-        user.children.length = 0;
+        // user.children.length = 0;
 
         console.log(user.full_name);
 
@@ -167,33 +162,110 @@ export class ReportService implements OnModuleInit {
     }
   }
 
-  private findUser(
-    listAdmins: User[],
-    userCode: string,
-    userName: string,
-  ): User | undefined {
+  async getTotalOutsideBid(startDate: string, endDate: string) {
+    const admin = JSON.parse(
+      await this.getWinLose(startDate, endDate, 'admin'),
+    );
+
+    let outsideBid = 0;
+    for (let i = 0; i < admin.children.length; i++) {
+      // console.log(listUsers[i]["profit"]);
+
+      outsideBid += admin.children[i].bidOutside;
+    }
+
+    return JSON.stringify({ outsideBid: outsideBid });
+  }
+
+  async getSupers(startDate: string, endDate: string) {
+    const admin = JSON.parse(
+      await this.getWinLose(startDate, endDate, 'admin'),
+    );
+
+    let superAdmin: User[] = admin.children;
+    superAdmin = superAdmin.filter((sup) => sup.profit !== 0);
+    superAdmin.sort((a, b) => (a.profit < b.profit ? -1 : 1));
+
+    return JSON.stringify(superAdmin);
+  }
+
+  async getMasters(startDate: string, endDate: string) {
+    const admin = JSON.parse(
+      await this.getWinLose(startDate, endDate, 'admin'),
+    );
+
+    const supers = admin.children;
+    let masters: User[] = [];
+
+    supers.forEach((sup: User) => {
+      masters = masters.concat(sup.children);
+    });
+    masters = masters.filter((master) => master.profit !== 0);
+    masters.sort((a, b) => (a.profit < b.profit ? -1 : 1));
+    return JSON.stringify(masters);
+  }
+
+  async getAgents(startDate: string, endDate: string) {
+    const admin = JSON.parse(
+      await this.getWinLose(startDate, endDate, 'admin'),
+    );
+
+    let agents: User[] = [];
+
+    admin.children.forEach((sup: User) => {
+      sup.children.forEach((master: User) => {
+        agents = agents.concat(master.children);
+      });
+    });
+    agents = agents.filter((agent) => agent.profit !== 0);
+    agents.sort((a, b) => (a.profit < b.profit ? -1 : 1));
+    return JSON.stringify(agents);
+  }
+
+  async getMembers(startDate: string, endDate: string) {
+    const admin = JSON.parse(
+      await this.getWinLose(startDate, endDate, 'admin'),
+    );
+
+    let members: User[] = [];
+
+    admin.children.forEach((sup: User) => {
+      sup.children.forEach((master: User) => {
+        master.children.forEach((agent: User) => {
+          members = members.concat(agent.children);
+        });
+      });
+    });
+    members = members.filter((member) => member.profit !== 0);
+    members.sort((a, b) => (a.profit < b.profit ? -1 : 1));
+    return JSON.stringify(members);
+  }
+
+  ////////////////////////////////////////////////////////////////
+
+  private findUser(listAdmins: User[], userName: string): User | undefined {
     for (const admin of listAdmins) {
-      if (admin.username === userCode || admin.full_name === userName) {
+      if (admin.username === userName || admin.full_name === userName) {
         return admin;
       }
       for (const superAdmin of admin.children) {
         if (
-          superAdmin.username === userCode ||
+          superAdmin.username === userName ||
           superAdmin.full_name === userName
         ) {
           return superAdmin;
         }
         for (const master of superAdmin.children) {
-          if (master.username === userCode || master.full_name === userName) {
+          if (master.username === userName || master.full_name === userName) {
             return master;
           }
           for (const agent of master.children) {
-            if (agent.username === userCode || agent.full_name === userName) {
+            if (agent.username === userName || agent.full_name === userName) {
               return agent;
             }
             for (const member of agent.children) {
               if (
-                member.username === userCode ||
+                member.username === userName ||
                 member.full_name === userName
               ) {
                 return member;
