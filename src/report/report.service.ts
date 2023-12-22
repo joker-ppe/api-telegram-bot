@@ -249,7 +249,71 @@ export class ReportService implements OnModuleInit {
     return JSON.stringify(members);
   }
 
+  async getUser(
+    startDate: string,
+    endDate: string,
+    yesterday: string,
+    userName: string,
+  ) {
+    const user = JSON.parse(
+      await this.getWinLose(startDate, endDate, userName),
+    );
+
+    let yesterdayData = user.history[yesterday];
+    if (!yesterdayData) {
+      yesterdayData = 0;
+    }
+
+    let todayData = user.history[endDate];
+    if (!todayData) {
+      todayData = 0;
+    }
+
+    let line = 'admin';
+    let title = 'Admin';
+
+    if (user.level === 2) {
+      title = 'Cổ Đông';
+      line = user.full_name;
+    } else if (user.level === 3) {
+      title = 'Tổng Đại Lý';
+      line = `${user.parent.full_name} -> ${user.full_name}`;
+    } else if (user.level === 4) {
+      title = 'Đại Lý';
+      const superAdmin = await this.getUserData(user.parent_uuid);
+      line = `${superAdmin.parent.full_name} -> ${user.parent.full_name} -> ${user.full_name}`;
+    } else if (user.level === 5) {
+      title = 'Hội Viên';
+      const master = await this.getUserData(user.parent_uuid);
+      const superAdmin = await this.getUserData(master.parent_uuid);
+      line = `${superAdmin.parent.full_name} -> ${master.parent.full_name} -> ${user.parent.full_name} -> ${user.full_name}`;
+    }
+
+    user['yesterdayData'] = yesterdayData;
+    user['todayData'] = todayData;
+    user['line'] = line;
+    user['title'] = title;
+
+    return JSON.stringify(user);
+  }
+
   ////////////////////////////////////////////////////////////////
+  private async getUserData(uuid: string) {
+    const url = `${this.baseUrl}/partner/user/index?api_key=${this.apiKey}&uuid=${uuid}&type=1`;
+
+    // console.log(url);
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+      // console.log(data);
+      return data.data[0];
+    } catch (error) {
+      console.error('Error loading data:', error);
+      return null; // return null or handle error as needed
+    } finally {
+    }
+  }
 
   private findUser(listAdmins: User[], userName: string): User | undefined {
     for (const admin of listAdmins) {

@@ -80,4 +80,18 @@ export class ReportController {
       await this.reportService.getMembers(startDate, endDate),
     );
   }
+
+  @Get('user')
+  async GetUser(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Query('yesterday') yesterday: string,
+    @Query('userName') userName: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+    return response.send(
+      await this.reportService.getUser(startDate, endDate, yesterday, userName),
+    );
+  }
 }
