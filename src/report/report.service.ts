@@ -277,16 +277,16 @@ export class ReportService implements OnModuleInit {
       line = user.full_name;
     } else if (user.level === 3) {
       title = 'Tổng Đại Lý';
-      line = `${user.parent.full_name} -> ${user.full_name}`;
+      line = `${user.parent.full_name}<br/>${user.full_name}`;
     } else if (user.level === 4) {
       title = 'Đại Lý';
       const superAdmin = await this.getUserData(user.parent_uuid);
-      line = `${superAdmin.parent.full_name} -> ${user.parent.full_name} -> ${user.full_name}`;
+      line = `${superAdmin.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
     } else if (user.level === 5) {
       title = 'Hội Viên';
       const master = await this.getUserData(user.parent_uuid);
       const superAdmin = await this.getUserData(master.parent_uuid);
-      line = `${superAdmin.parent.full_name} -> ${master.parent.full_name} -> ${user.parent.full_name} -> ${user.full_name}`;
+      line = `${superAdmin.parent.full_name}<br/>${master.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
     }
 
     user['yesterdayData'] = yesterdayData;
