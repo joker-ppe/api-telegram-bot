@@ -69,7 +69,7 @@ export class ReportService implements OnModuleInit {
         if (!dataDate.data || dataDate.data === 'null') {
           // console.log(`${hour} - ${minute}`);
 
-          const betData = await this.getBetData(date, date);
+          const betData = await this.getBetData(date, date, 'betLog');
           dataDate.data = JSON.stringify(betData);
 
           if (
@@ -97,7 +97,7 @@ export class ReportService implements OnModuleInit {
         }
       } else {
         if (!dataDate.data || dataDate.data === 'null') {
-          const betData = await this.getBetData(date, date);
+          const betData = await this.getBetData(date, date, 'betLog');
           if (hasData) {
             await this.prismaService.data.update({
               where: {
@@ -272,16 +272,30 @@ export class ReportService implements OnModuleInit {
     let line = 'admin';
     let title = 'Admin';
 
+    const listChildrenName = [];
+
     if (user.level === 2) {
       title = 'Cổ Đông';
       line = user.full_name;
+
+      user.children.forEach((master: User) => {
+        listChildrenName.push(master.full_name);
+      });
     } else if (user.level === 3) {
       title = 'Tổng Đại Lý';
       line = `${user.parent.full_name}<br/>${user.full_name}`;
+
+      user.children.forEach((agent: User) => {
+        listChildrenName.push(agent.full_name);
+      });
     } else if (user.level === 4) {
       title = 'Đại Lý';
       const superAdmin = await this.getUserData(user.parent_uuid);
       line = `${superAdmin.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
+
+      user.children.forEach((member: User) => {
+        listChildrenName.push(member.full_name);
+      });
     } else if (user.level === 5) {
       title = 'Hội Viên';
       const master = await this.getUserData(user.parent_uuid);
@@ -294,9 +308,224 @@ export class ReportService implements OnModuleInit {
     user['line'] = line;
     user['title'] = title;
 
+    ////////////////////////////////////////////////////////////////////////
+
+    if (user.children) {
+      user.children = listChildrenName;
+    }
+
+    user.parent = {};
+
+    // const userBetData = [];
+    // userBetData.forEach((betSlip) => {});
+
     return JSON.stringify(user);
   }
 
+  async getUserOsNumber(endDate: string, userName: string) {
+    const user = JSON.parse(await this.getWinLose(endDate, endDate, userName));
+
+    if (user.level === 5 || user.level === 1) {
+      const uniqueDatesSearch = this.generateDateRange(endDate, endDate);
+      console.log(uniqueDatesSearch);
+
+      const currentDate = new Date();
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Bangkok',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      });
+      const formattedDate = formatter.format(currentDate);
+
+      const parts = formatter.formatToParts(currentDate);
+
+      const year = parts.find((part) => part.type === 'year').value;
+      const month = parts.find((part) => part.type === 'month').value;
+      const day = parts.find((part) => part.type === 'day').value;
+      const hour = parts.find((part) => part.type === 'hour').value;
+      const minute = parts.find((part) => part.type === 'minute').value;
+
+      console.log(`Current date: ${formattedDate}`);
+
+      const currentDateString = `${year}-${month}-${day}`;
+
+      let betFullData: BetItem[] = [];
+      for (let i = 0; i < uniqueDatesSearch.length; i++) {
+        const date = uniqueDatesSearch[i];
+        let hasData = true;
+        let dataDate = await this.prismaService.data.findUnique({
+          where: {
+            date: date,
+          },
+        });
+
+        if (!dataDate) {
+          hasData = false;
+          dataDate = {
+            date: date,
+            data: null,
+          };
+        }
+
+        if (date === currentDateString) {
+          if (!dataDate.data || dataDate.data === 'null') {
+            // console.log(`${hour} - ${minute}`);
+
+            const betData = await this.getBetData(date, date, 'betLog');
+            dataDate.data = JSON.stringify(betData);
+
+            if (
+              (parseInt(hour) === 18 && parseInt(minute) > 40) ||
+              parseInt(hour) > 18
+            ) {
+              if (hasData) {
+                await this.prismaService.data.update({
+                  where: {
+                    date: date,
+                  },
+                  data: {
+                    data: JSON.stringify(betData),
+                  },
+                });
+              } else {
+                await this.prismaService.data.create({
+                  data: {
+                    date: date,
+                    data: JSON.stringify(betData),
+                  },
+                });
+              }
+            }
+          }
+        } else {
+          if (!dataDate.data || dataDate.data === 'null') {
+            const betData = await this.getBetData(date, date, 'betLog');
+            if (hasData) {
+              await this.prismaService.data.update({
+                where: {
+                  date: date,
+                },
+                data: {
+                  data: JSON.stringify(betData),
+                },
+              });
+            } else {
+              await this.prismaService.data.create({
+                data: {
+                  date: date,
+                  data: JSON.stringify(betData),
+                },
+              });
+            }
+            dataDate.data = JSON.stringify(betData);
+          }
+        }
+
+        // Thêm dữ liệu vào mảng betFullData
+        if (dataDate.data) {
+          betFullData = betFullData.concat(JSON.parse(dataDate.data));
+        }
+      }
+
+      let userData = betFullData;
+
+      if (user.level === 5) {
+        userData = betFullData.filter(
+          (betSlip) => betSlip.user_uuid === user.uuid,
+        );
+      }
+
+      const categorizedList = userData.reduce((acc, item) => {
+        // Create a key for each combination of bet_type and number
+        const key = `${item.bet_type}`;
+        if (!acc[key]) {
+          acc[key] = [];
+        }
+        acc[key].push(item);
+        return acc;
+      }, {});
+
+      const summarizeNumbersByBetType = (data) => {
+        const summary = {};
+
+        for (const betType in data) {
+          summary[betType] = [];
+
+          data[betType].forEach((bet) => {
+            summary[betType].push({
+              number: bet.number,
+              point: bet.point,
+              price: bet.price,
+              amount: bet.amount,
+            });
+          });
+
+          // Sắp xếp mảng theo point
+          summary[betType].sort((a, b) => b.point - a.point);
+        }
+
+        return summary;
+      };
+
+      const summarizedNumbers = summarizeNumbersByBetType(categorizedList);
+      // console.log(categorizedList);
+
+      user['data'] = summarizedNumbers;
+    } else {
+      user['data'] = [];
+    }
+
+    user.parent = {};
+
+    // const userBetData = [];
+    // userBetData.forEach((betSlip) => {});
+
+    return JSON.stringify(user);
+  }
+
+  async getUserOsBet(endDate: string, userName: string) {
+    const user = JSON.parse(await this.getWinLose(endDate, endDate, userName));
+
+    if (user.level === 5) {
+      let betData = await this.getBetData(endDate, endDate, 'betSlip');
+
+      betData = betData.filter((item) => user.uuid === item.user_uuid);
+
+      // console.log(betData);
+
+      betData.sort((a, b) => {
+        if (a.bet_type !== b.bet_type) {
+          return a.bet_type - b.bet_type; // Compare by property1 first
+        } else {
+          return b.point - a.point;
+        }
+      });
+
+      user['data'] = betData;
+    } else {
+      user['data'] = [];
+    }
+
+    user.parent = {};
+
+    // const userBetData = [];
+    // userBetData.forEach((betSlip) => {});
+
+    return JSON.stringify(user);
+  }
+
+  async getReportNumber(endDate: string) {
+    const user = JSON.parse(await this.getUserOsNumber(endDate, 'admin'));
+
+    const data = user.data;
+
+    return data;
+  }
   ////////////////////////////////////////////////////////////////
   private async getUserData(uuid: string) {
     const url = `${this.baseUrl}/partner/user/index?api_key=${this.apiKey}&uuid=${uuid}&type=1`;
@@ -368,16 +597,16 @@ export class ReportService implements OnModuleInit {
   }
 
   private async getListUsers(): Promise<User[]> {
-    const config = await this.getConfig();
-    // console.log(JSON.stringify(users));
-
-    const totalPage = config.optional.paging_info.total_page;
-    console.log('users_page', totalPage);
-
-    const rowCount = config.optional.paging_info.row_count;
-    console.log('users', rowCount);
-
     try {
+      const config = await this.getConfig();
+      // console.log(JSON.stringify(users));
+
+      const totalPage = config.optional.paging_info.total_page;
+      console.log('users_page', totalPage);
+
+      const rowCount = config.optional.paging_info.row_count;
+      console.log('users', rowCount);
+
       const results = await Promise.all(
         Array.from({ length: totalPage }, (_, i) => this.fetchUserPage(i + 1)),
       );
@@ -437,20 +666,19 @@ export class ReportService implements OnModuleInit {
     return dates;
   }
 
-  private async getBetData(from_date: string, to_date: string) {
-    const config = await this.getConfigBet(from_date, to_date);
+  private async getBetData(from_date: string, to_date: string, type: string) {
+    const config = await this.getConfigBet(from_date, to_date, type);
     // console.log(JSON.stringify(users));
-
-    const totalPage = config.optional.paging_info.total_page;
-    console.log('bet page', totalPage);
-
-    const rowCount = config.optional.paging_info.row_count;
-    console.log('bet record', rowCount);
-
     try {
+      const totalPage = config.optional.paging_info.total_page;
+      console.log('bet page', totalPage);
+
+      const rowCount = config.optional.paging_info.row_count;
+      console.log('bet record', rowCount);
+
       const results = await Promise.all(
         Array.from({ length: totalPage }, (_, i) =>
-          this.fetchBetDataPage(i + 1, from_date, to_date),
+          this.fetchBetDataPage(i + 1, from_date, to_date, type),
         ),
       );
 
@@ -474,8 +702,8 @@ export class ReportService implements OnModuleInit {
     }
   }
 
-  private async getConfigBet(from_date: string, to_date: string) {
-    const url = `${this.baseUrl}/partner/game/betLog?api_key=${this.apiKey}&from_date=${from_date}&to_date=${to_date}`;
+  private async getConfigBet(from_date: string, to_date: string, type: string) {
+    const url = `${this.baseUrl}/partner/game/${type}?api_key=${this.apiKey}&from_date=${from_date}&to_date=${to_date}`;
 
     // console.log(url);
 
@@ -496,11 +724,12 @@ export class ReportService implements OnModuleInit {
     page: number,
     from_date: string,
     to_date: string,
+    type: string,
   ) {
     // showLoadingIndicator(`lịch sử bet ${page}/${totalPage}`)
     // console.log(`lịch sử bet ${page}/${totalPage}`);
 
-    const url = `${this.baseUrl}/partner/game/betLog?api_key=${this.apiKey}&from_date=${from_date}&to_date=${to_date}&p=${page}`;
+    const url = `${this.baseUrl}/partner/game/${type}?api_key=${this.apiKey}&from_date=${from_date}&to_date=${to_date}&p=${page}`;
     return fetch(url)
       .then((response) => {
         if (!response.ok) {

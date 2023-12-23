@@ -94,4 +94,37 @@ export class ReportController {
       await this.reportService.getUser(startDate, endDate, yesterday, userName),
     );
   }
+
+  @Get('user/os_number')
+  async GetUserOsNumber(
+    @Query('endDate') endDate: string,
+    @Query('userName') userName: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+    return response.send(
+      await this.reportService.getUserOsNumber(endDate, userName),
+    );
+  }
+
+  @Get('user/os_bet')
+  async GetUserOsBet(
+    @Query('endDate') endDate: string,
+    @Query('userName') userName: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+    return response.send(
+      await this.reportService.getUserOsBet(endDate, userName),
+    );
+  }
+
+  @Get('numbers')
+  async GetReportNumber(
+    @Query('endDate') endDate: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+    return response.send(await this.reportService.getReportNumber(endDate));
+  }
 }
