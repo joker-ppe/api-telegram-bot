@@ -1003,13 +1003,16 @@ export class ReportService implements OnModuleInit {
 
     const termUserMap = userBetData.reduce((acc: any, item: any) => {
       // Kiểm tra xem 'term' đã tồn tại trong accumulator hay chưa
-      if (acc[item.term]) {
-        // Cộng dồn 'amount' nếu 'term' đã tồn tại
-        acc[item.term] += item.payout - item.amount;
-      } else {
-        // Nếu 'term' chưa tồn tại, khởi tạo với 'amount' của item hiện tại
-        acc[item.term] = item.payout - item.amount;
+      if (item.status === 1) {
+        if (acc[item.term]) {
+          // Cộng dồn 'amount' nếu 'term' đã tồn tại
+          acc[item.term] += item.payout - item.amount;
+        } else {
+          // Nếu 'term' chưa tồn tại, khởi tạo với 'amount' của item hiện tại
+          acc[item.term] = item.payout - item.amount;
+        }
       }
+
       return acc;
     }, {});
 
