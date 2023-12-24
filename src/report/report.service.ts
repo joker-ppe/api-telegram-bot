@@ -131,7 +131,12 @@ export class ReportService implements OnModuleInit {
 
     if (betFullData && listUsers) {
       const uniqueDates: string[] = Array.from(
-        new Set(betFullData.map((record: BetItem) => record.term)),
+        new Set(
+          betFullData
+            .filter((record: BetItem) => record != null)
+            .filter((record: BetItem) => record.term != null)
+            .map((record: BetItem) => record.term),
+        ),
       );
       uniqueDates.sort((a, b) => a.localeCompare(b));
 
@@ -143,13 +148,129 @@ export class ReportService implements OnModuleInit {
 
       //   let user: User = null;
       //   return listAdmins;
-      console.log('userCode: ' + userName);
+      // console.log('listAdmins: ' + listAdmins);
 
-      const user = this.findUser(listAdmins, userName);
+      const user: User = this.findUser(listAdmins, userName);
       if (user) {
         // user.children.length = 0;
 
-        console.log(user.full_name);
+        let line = 'admin';
+        let title = 'Admin';
+
+        const listChildren = [];
+
+        let userData = betFullData;
+        const listUserUuid = [];
+
+        if (user.level === 5) {
+          title = 'Hội Viên';
+          const master = await this.getUserData(user.parent_uuid);
+          const superAdmin = await this.getUserData(master.parent_uuid);
+          line = `${superAdmin.parent.full_name}<br/>${master.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
+          listUserUuid.push(user.uuid);
+        } else if (user.level === 4) {
+          title = 'Đại Lý';
+          const superAdmin = await this.getUserData(user.parent_uuid);
+          line = `${superAdmin.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
+
+          user.children.forEach((member) => {
+            listChildren.push({
+              full_name: member.full_name,
+              outstanding: member.outstanding,
+            });
+            listUserUuid.push(member.uuid);
+          });
+        } else if (user.level === 3) {
+          title = 'Tổng Đại Lý';
+          line = `${user.parent.full_name}<br/>${user.full_name}`;
+
+          user.children.forEach((agent) => {
+            listChildren.push({
+              full_name: agent.full_name,
+              outstanding: agent.outstanding,
+            });
+            agent.children.forEach((member) => {
+              listUserUuid.push(member.uuid);
+            });
+          });
+        } else if (user.level === 2) {
+          title = 'Cổ Đông';
+          line = user.full_name;
+          user.children.forEach((master) => {
+            listChildren.push({
+              full_name: master.full_name,
+              outstanding: master.outstanding,
+            });
+            master.children.forEach((agent) => {
+              agent.children.forEach((member) => {
+                listUserUuid.push(member.uuid);
+              });
+            });
+          });
+        }
+
+        if (user.level != 1) {
+          userData = betFullData.filter((betSlip) =>
+            listUserUuid.includes(betSlip.user_uuid),
+          );
+        }
+
+        userData = betFullData.filter((betSlip) => betSlip.term === endDate);
+
+        const categorizedList = userData.reduce((acc, item) => {
+          // Create a key for each combination of bet_type and number
+          const key = `${item.bet_type}`;
+          if (!acc[key]) {
+            acc[key] = [];
+          }
+          acc[key].push(item);
+          return acc;
+        }, {});
+
+        const summarizeNumbersByBetType = (data) => {
+          const summary = {};
+
+          for (const betType in data) {
+            // summary[betType] = [];
+
+            // data[betType].forEach((bet) => {
+            //   summary[betType].push({
+            //     number: bet.number,
+            //     point: bet.point,
+            //     price: bet.price,
+            //     amount: bet.amount,
+            //   });
+            // });
+
+            // // Sắp xếp mảng theo point
+            // summary[betType].sort((a, b) => b.point - a.point);
+
+            let point = 0;
+            let amount = 0;
+
+            data[betType].forEach((bet) => {
+              point += bet.point;
+              amount += bet.amount;
+            });
+
+            summary[betType] = {
+              point: point,
+              amount: amount,
+            };
+          }
+
+          return summary;
+        };
+
+        const summarizedNumbers = summarizeNumbersByBetType(categorizedList);
+        // console.log(categorizedList);
+
+        user['line'] = line;
+        user['title'] = title;
+        user['list_children'] = listChildren;
+        user['data_bet'] = summarizedNumbers;
+
+        // console.log(user['data']);
 
         return JSON.stringify(user);
       }
@@ -199,9 +320,12 @@ export class ReportService implements OnModuleInit {
     const supers = admin.children;
     let masters: User[] = [];
 
+    console.log(masters);
+
     supers.forEach((sup: User) => {
       masters = masters.concat(sup.children);
     });
+
     masters = masters.filter(
       (master) => master.profit !== 0 || master.outstanding !== 0,
     );
@@ -269,50 +393,10 @@ export class ReportService implements OnModuleInit {
       todayData = 0;
     }
 
-    let line = 'admin';
-    let title = 'Admin';
-
-    const listChildrenName = [];
-
-    if (user.level === 2) {
-      title = 'Cổ Đông';
-      line = user.full_name;
-
-      user.children.forEach((master: User) => {
-        listChildrenName.push(master.full_name);
-      });
-    } else if (user.level === 3) {
-      title = 'Tổng Đại Lý';
-      line = `${user.parent.full_name}<br/>${user.full_name}`;
-
-      user.children.forEach((agent: User) => {
-        listChildrenName.push(agent.full_name);
-      });
-    } else if (user.level === 4) {
-      title = 'Đại Lý';
-      const superAdmin = await this.getUserData(user.parent_uuid);
-      line = `${superAdmin.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
-
-      user.children.forEach((member: User) => {
-        listChildrenName.push(member.full_name);
-      });
-    } else if (user.level === 5) {
-      title = 'Hội Viên';
-      const master = await this.getUserData(user.parent_uuid);
-      const superAdmin = await this.getUserData(master.parent_uuid);
-      line = `${superAdmin.parent.full_name}<br/>${master.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
-    }
-
     user['yesterdayData'] = yesterdayData;
     user['todayData'] = todayData;
-    user['line'] = line;
-    user['title'] = title;
 
     ////////////////////////////////////////////////////////////////////////
-
-    if (user.children) {
-      user.children = listChildrenName;
-    }
 
     user.parent = {};
 

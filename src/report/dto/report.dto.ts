@@ -48,4 +48,5 @@ export interface User {
   bid: number;
   bidOutside: number;
   parent_uuid: string;
+  parent: User;
 }
