@@ -215,7 +215,7 @@ export class ReportService implements OnModuleInit {
           );
         }
 
-        userData = betFullData.filter((betSlip) => betSlip.term === endDate);
+        userData = userData.filter((betSlip) => betSlip.term === endDate);
 
         const categorizedList = userData.reduce((acc, item) => {
           // Create a key for each combination of bet_type and number
