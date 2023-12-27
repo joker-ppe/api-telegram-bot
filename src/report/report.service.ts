@@ -57,6 +57,8 @@ export class ReportService implements OnModuleInit {
         },
       });
 
+      console.log(`${date} - ${JSON.stringify(dataDate)}`);
+
       if (!dataDate) {
         hasData = false;
         dataDate = {
@@ -66,7 +68,11 @@ export class ReportService implements OnModuleInit {
       }
 
       if (date === currentDateString) {
-        if (!dataDate.data || dataDate.data === 'null') {
+        if (
+          !dataDate.data ||
+          dataDate.data === 'null' ||
+          dataDate.data === '[]'
+        ) {
           // console.log(`${hour} - ${minute}`);
 
           const betData = await this.getBetData(date, date, 'betLog');
@@ -96,7 +102,11 @@ export class ReportService implements OnModuleInit {
           }
         }
       } else {
-        if (!dataDate.data || dataDate.data === 'null') {
+        if (
+          !dataDate.data ||
+          dataDate.data === 'null' ||
+          dataDate.data === '[]'
+        ) {
           const betData = await this.getBetData(date, date, 'betLog');
           if (hasData) {
             await this.prismaService.data.update({
@@ -457,7 +467,11 @@ export class ReportService implements OnModuleInit {
         }
 
         if (date === currentDateString) {
-          if (!dataDate.data || dataDate.data === 'null') {
+          if (
+            !dataDate.data ||
+            dataDate.data === 'null' ||
+            dataDate.data === '[]'
+          ) {
             // console.log(`${hour} - ${minute}`);
 
             const betData = await this.getBetData(date, date, 'betLog');
@@ -487,7 +501,11 @@ export class ReportService implements OnModuleInit {
             }
           }
         } else {
-          if (!dataDate.data || dataDate.data === 'null') {
+          if (
+            !dataDate.data ||
+            dataDate.data === 'null' ||
+            dataDate.data === '[]'
+          ) {
             const betData = await this.getBetData(date, date, 'betLog');
             if (hasData) {
               await this.prismaService.data.update({
