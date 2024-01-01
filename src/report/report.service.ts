@@ -57,7 +57,7 @@ export class ReportService implements OnModuleInit {
         },
       });
 
-      console.log(`${date} - ${JSON.stringify(dataDate)}`);
+      // console.log(`${date} - ${JSON.stringify(dataDate)}`);,
 
       if (!dataDate) {
         hasData = false;
@@ -330,7 +330,7 @@ export class ReportService implements OnModuleInit {
     const supers = admin.children;
     let masters: User[] = [];
 
-    console.log(masters);
+    // console.log(masters);
 
     supers.forEach((sup: User) => {
       masters = masters.concat(sup.children);
