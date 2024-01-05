@@ -70,8 +70,8 @@ export class ReportService implements OnModuleInit {
       if (date === currentDateString) {
         if (
           !dataDate.data ||
-          dataDate.data === 'null' ||
-          dataDate.data === '[]'
+          JSON.stringify(dataDate.data) === 'null' ||
+          JSON.stringify(dataDate.data) === '[]'
         ) {
           // console.log(`${hour} - ${minute}`);
 
@@ -79,7 +79,7 @@ export class ReportService implements OnModuleInit {
           dataDate.data = JSON.stringify(betData);
 
           if (
-            (parseInt(hour) === 18 && parseInt(minute) > 40) ||
+            (parseInt(hour) === 18 && parseInt(minute) > 35) ||
             parseInt(hour) > 18
           ) {
             if (hasData) {
@@ -104,8 +104,8 @@ export class ReportService implements OnModuleInit {
       } else {
         if (
           !dataDate.data ||
-          dataDate.data === 'null' ||
-          dataDate.data === '[]'
+          JSON.stringify(dataDate.data) === 'null' ||
+          JSON.stringify(dataDate.data) === '[]'
         ) {
           const betData = await this.getBetData(date, date, 'betLog');
           if (hasData) {
@@ -478,7 +478,7 @@ export class ReportService implements OnModuleInit {
             dataDate.data = JSON.stringify(betData);
 
             if (
-              (parseInt(hour) === 18 && parseInt(minute) > 40) ||
+              (parseInt(hour) === 18 && parseInt(minute) > 35) ||
               parseInt(hour) > 18
             ) {
               if (hasData) {
