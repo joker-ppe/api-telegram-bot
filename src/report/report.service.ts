@@ -187,6 +187,7 @@ export class ReportService implements OnModuleInit {
             listChildren.push({
               full_name: member.full_name,
               outstanding: member.outstanding,
+              profit: member.profit,
             });
             listUserUuid.push(member.uuid);
           });
@@ -198,6 +199,7 @@ export class ReportService implements OnModuleInit {
             listChildren.push({
               full_name: agent.full_name,
               outstanding: agent.outstanding,
+              profit: agent.profit,
             });
             agent.children.forEach((member) => {
               listUserUuid.push(member.uuid);
@@ -210,6 +212,7 @@ export class ReportService implements OnModuleInit {
             listChildren.push({
               full_name: master.full_name,
               outstanding: master.outstanding,
+              profit: master.profit,
             });
             master.children.forEach((agent) => {
               agent.children.forEach((member) => {
