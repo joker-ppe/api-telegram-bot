@@ -25,6 +25,7 @@ export interface BetSlipId {
 }
 
 export interface User {
+  line: string;
   uuid: string;
   username: string;
   full_name: string;

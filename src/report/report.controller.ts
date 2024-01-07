@@ -16,6 +16,14 @@ export class ReportController {
     @Res() response: Response,
   ) {
     response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'report/GetWinLose',
+      startDate: startDate,
+      endDate: endDate,
+      userName: userName,
+    });
+
     return response.send(
       await this.reportService.getWinLose(startDate, endDate, userName),
     );
@@ -28,6 +36,13 @@ export class ReportController {
     @Res() response: Response,
   ) {
     response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'report/bidOutside',
+      startDate: startDate,
+      endDate: endDate,
+    });
+
     return response.send(
       await this.reportService.getTotalOutsideBid(startDate, endDate),
     );
@@ -40,6 +55,13 @@ export class ReportController {
     @Res() response: Response,
   ) {
     response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'report/supers',
+      startDate: startDate,
+      endDate: endDate,
+    });
+
     return response.send(
       await this.reportService.getSupers(startDate, endDate),
     );
@@ -52,6 +74,13 @@ export class ReportController {
     @Res() response: Response,
   ) {
     response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'report/masters',
+      startDate: startDate,
+      endDate: endDate,
+    });
+
     return response.send(
       await this.reportService.getMasters(startDate, endDate),
     );
@@ -64,6 +93,13 @@ export class ReportController {
     @Res() response: Response,
   ) {
     response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'report/agents',
+      startDate: startDate,
+      endDate: endDate,
+    });
+
     return response.send(
       await this.reportService.getAgents(startDate, endDate),
     );
@@ -76,6 +112,13 @@ export class ReportController {
     @Res() response: Response,
   ) {
     response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'report/members',
+      startDate: startDate,
+      endDate: endDate,
+    });
+
     return response.send(
       await this.reportService.getMembers(startDate, endDate),
     );
@@ -90,6 +133,15 @@ export class ReportController {
     @Res() response: Response,
   ) {
     response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'report/user',
+      startDate: startDate,
+      endDate: endDate,
+      yesterday: yesterday,
+      userName: userName,
+    });
+
     return response.send(
       await this.reportService.getUser(startDate, endDate, yesterday, userName),
     );
@@ -114,6 +166,13 @@ export class ReportController {
     @Res() response: Response,
   ) {
     response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'report/user/os_bet',
+      endDate: endDate,
+      userName: userName,
+    });
+
     return response.send(
       await this.reportService.getUserOsBet(endDate, userName),
     );

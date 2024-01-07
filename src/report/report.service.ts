@@ -771,7 +771,7 @@ export class ReportService implements OnModuleInit {
     return dates;
   }
 
-  private async getBetData(from_date: string, to_date: string, type: string) {
+  async getBetData(from_date: string, to_date: string, type: string) {
     const config = await this.getConfigBet(from_date, to_date, type);
     // console.log(JSON.stringify(users));
     try {
