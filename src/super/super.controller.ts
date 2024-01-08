@@ -21,6 +21,27 @@ export class SuperController {
   //     );
   //   }
 
+  @Get('supers')
+  async GetSupers(
+    @Query('super') superUserName: string[],
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'super/supers',
+      super: superUserName,
+      startDate: startDate,
+      endDate: endDate,
+    });
+
+    return response.send(
+      await this.superService.getSupers(superUserName, startDate, endDate),
+    );
+  }
+
   @Get('masters')
   async GetMasters(
     @Query('super') superUserName: string[],

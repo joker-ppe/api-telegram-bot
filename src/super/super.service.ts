@@ -42,6 +42,32 @@ export class SuperService implements OnModuleInit {
     return JSON.stringify(user);
   }
 
+  async getSupers(superUserName: string[], startDate: string, endDate: string) {
+    if (typeof superUserName === 'string') {
+      superUserName = [superUserName];
+    }
+
+    // console.log(superUserName);
+
+    const admin = JSON.parse(
+      await this.reportService.getWinLose(startDate, endDate, 'admin'),
+    );
+
+    let supers = admin.children.filter((child: User) => {
+      const isSuperUser = superUserName.includes(child.full_name);
+      // console.log(`Child: ${child.full_name}, Is SuperUser: ${isSuperUser}`);
+      return isSuperUser;
+    });
+
+    // console.log(masters);
+
+    supers = supers.filter(
+      (sup: User) => sup.profit !== 0 || sup.outstanding !== 0,
+    );
+    supers.sort((a: User, b: User) => (a.profit > b.profit ? -1 : 1));
+    return JSON.stringify(supers);
+  }
+
   async getMasters(
     superUserName: string[],
     startDate: string,
