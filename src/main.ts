@@ -11,6 +11,12 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { DateTime } from 'luxon';
 import { Request, Response, NextFunction } from 'express';
 
+function extractIPv4(ipv6) {
+  const ipv4Regex = /::ffff:(\d+\.\d+\.\d+\.\d+)/;
+  const match = ipv6.match(ipv4Regex);
+  return match ? match[1] : ipv6;
+}
+
 @Injectable()
 export class IpWhitelistMiddleware implements NestMiddleware {
   private readonly whitelist = [
@@ -21,7 +27,8 @@ export class IpWhitelistMiddleware implements NestMiddleware {
   ]; // Thay thế với danh sách IP của bạn
 
   use(req: Request, res: Response, next: NextFunction) {
-    const requestIp = req.ip || req.socket.remoteAddress;
+    const rawIp = req.ip || req.socket.remoteAddress;
+    const requestIp = extractIPv4(rawIp);
     if (!this.whitelist.includes(requestIp)) {
       throw new HttpException(
         `IP ${requestIp} not allowed`,
