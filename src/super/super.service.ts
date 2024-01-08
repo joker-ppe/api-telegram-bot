@@ -225,6 +225,8 @@ export class SuperService implements OnModuleInit {
     if (user.level === 2) {
       if (superUserNames.includes(user.full_name)) {
         return;
+      } else {
+        throw new NotFoundException();
       }
     }
 

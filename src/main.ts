@@ -1,11 +1,41 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NestMiddleware,
+  ValidationPipe,
+} from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { DateTime } from 'luxon';
+import { Request, Response, NextFunction } from 'express';
+
+@Injectable()
+export class IpWhitelistMiddleware implements NestMiddleware {
+  private readonly whitelist = [
+    '188.166.208.190',
+    '3.1.5.108',
+    '13.215.248.115',
+    '::1',
+  ]; // Thay thế với danh sách IP của bạn
+
+  use(req: Request, res: Response, next: NextFunction) {
+    const requestIp = req.ip || req.socket.remoteAddress;
+    if (!this.whitelist.includes(requestIp)) {
+      throw new HttpException(
+        `IP ${requestIp} not allowed`,
+        HttpStatus.FORBIDDEN,
+      );
+    }
+    next();
+  }
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  // Setup IP Whitelist Middleware
+  app.use(new IpWhitelistMiddleware().use.bind(new IpWhitelistMiddleware()));
   // add middleware HERE!
   app.useGlobalPipes(new ValidationPipe());
 
