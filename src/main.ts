@@ -30,8 +30,9 @@ export class IpWhitelistMiddleware implements NestMiddleware {
     const rawIp = req.ip || req.socket.remoteAddress;
     const requestIp = extractIPv4(rawIp);
     if (!this.whitelist.includes(requestIp)) {
+      console.log(`IP ${requestIp} not allowed.`);
       throw new HttpException(
-        `IP ${requestIp} not allowed`,
+        `IP ${requestIp} not allowed.`,
         HttpStatus.FORBIDDEN,
       );
     }
