@@ -121,13 +121,13 @@ export class SuperService implements OnModuleInit {
       return isSuperUser;
     });
 
+    let agents: User[] = [];
+
     supers.forEach((sup: User) => {
       sup.children.forEach((master: User) => {
         agents = agents.concat(master.children);
       });
     });
-
-    let agents: User[] = [];
 
     agents = agents.filter(
       (agent) => agent.profit !== 0 || agent.outstanding !== 0,
