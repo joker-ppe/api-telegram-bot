@@ -157,9 +157,11 @@ export class SuperService implements OnModuleInit {
 
     let members: User[] = [];
 
-    supers.forEach((master: User) => {
-      master.children.forEach((agent: User) => {
-        members = members.concat(agent.children);
+    supers.forEach((sup: User) => {
+      sup.children.forEach((master: User) => {
+        master.children.forEach((agent: User) => {
+          members = members.concat(agent.children);
+        });
       });
     });
 
