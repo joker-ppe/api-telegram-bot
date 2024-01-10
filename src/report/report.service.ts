@@ -299,17 +299,17 @@ export class ReportService implements OnModuleInit {
     });
     const formattedDate = formatter.format(currentDate);
 
-    const parts = formatter.formatToParts(currentDate);
+    // const parts = formatter.formatToParts(currentDate);
 
-    const year = parts.find((part) => part.type === 'year').value;
-    const month = parts.find((part) => part.type === 'month').value;
-    const day = parts.find((part) => part.type === 'day').value;
-    const hour = parts.find((part) => part.type === 'hour').value;
-    const minute = parts.find((part) => part.type === 'minute').value;
+    // const year = parts.find((part) => part.type === 'year').value;
+    // const month = parts.find((part) => part.type === 'month').value;
+    // const day = parts.find((part) => part.type === 'day').value;
+    // const hour = parts.find((part) => part.type === 'hour').value;
+    // const minute = parts.find((part) => part.type === 'minute').value;
 
     console.log(`Current date: ${formattedDate}`);
 
-    const currentDateString = `${year}-${month}-${day}`;
+    // const currentDateString = `${year}-${month}-${day}`;
 
     const uniqueDatesSearch = this.generateDateRange(startDate, endDate);
     console.log(uniqueDatesSearch);
@@ -319,7 +319,7 @@ export class ReportService implements OnModuleInit {
       const date = uniqueDatesSearch[i];
       console.log('*******************\nChecking data date: ' + date);
 
-      let hasResultBet = false;
+      // let hasResultBet = false;
 
       let dataDate = await this.prismaService.data.findUnique({
         where: {
@@ -335,45 +335,45 @@ export class ReportService implements OnModuleInit {
           lastTotalPage: 1,
           lastTotalRow: 0,
           data: null,
-          hasResult: false,
+
           createdAt: new Date(),
           updatedAt: new Date(),
         };
       }
 
-      if (currentDateString === date) {
-        if (
-          (parseInt(hour) === 18 && parseInt(minute) > this.minuteHasResults) ||
-          parseInt(hour) > 18
-        ) {
-          if (!dataDate.hasResult) {
-            if (dataDate.data) {
-              // xóa kết quả ngày hôm đó
-              await this.prismaService.data.delete({
-                where: {
-                  date: date,
-                },
-              });
+      // if (currentDateString === date) {
+      //   if (
+      //     (parseInt(hour) === 18 && parseInt(minute) > this.minuteHasResults) ||
+      //     parseInt(hour) > 18
+      //   ) {
+      //     if (!dataDate.hasResult) {
+      //       if (dataDate.data) {
+      //         // xóa kết quả ngày hôm đó
+      //         await this.prismaService.data.delete({
+      //           where: {
+      //             date: date,
+      //           },
+      //         });
 
-              // update current data date
-              dataDate = {
-                date: date,
-                lastTotalPage: 1,
-                lastTotalRow: 0,
-                data: null,
-                hasResult: false,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              };
-            }
-          }
-          hasResultBet = true;
-        } else {
-          hasResultBet = false;
-        }
-      } else {
-        hasResultBet = true;
-      }
+      //         // update current data date
+      //         dataDate = {
+      //           date: date,
+      //           lastTotalPage: 1,
+      //           lastTotalRow: 0,
+      //           data: null,
+
+      //           createdAt: new Date(),
+      //           updatedAt: new Date(),
+      //         };
+      //       }
+      //     }
+      //     hasResultBet = true;
+      //   } else {
+      //     hasResultBet = false;
+      //   }
+      // } else {
+      //   hasResultBet = true;
+      // }
 
       let lastData = JSON.parse(dataDate.data);
 
@@ -412,7 +412,6 @@ export class ReportService implements OnModuleInit {
           dataDate.data = JSON.stringify(dateData);
           dataDate.lastTotalPage = betData.totalPage;
           dataDate.lastTotalRow = betData.rowCount;
-          dataDate.hasResult = hasResultBet;
 
           const currentDataDate = await this.prismaService.data.findUnique({
             where: {
@@ -429,7 +428,6 @@ export class ReportService implements OnModuleInit {
                 data: dataDate.data,
                 lastTotalPage: dataDate.lastTotalPage,
                 lastTotalRow: dataDate.lastTotalRow,
-                hasResult: dataDate.hasResult,
               },
             });
           } else {
@@ -439,17 +437,16 @@ export class ReportService implements OnModuleInit {
                 data: dataDate.data,
                 lastTotalPage: dataDate.lastTotalPage,
                 lastTotalRow: dataDate.lastTotalRow,
-                hasResult: dataDate.hasResult,
               },
             });
           }
 
           console.log(
-            `Updated new data: total page now=${dataDate.lastTotalPage}, total row now=${dataDate.lastTotalRow}, hasResult=${dataDate.hasResult}`,
+            `Updated new data: total page now = ${dataDate.lastTotalPage}, total row now = ${dataDate.lastTotalRow}`,
           );
         } else {
           console.error(
-            `Không khớp số lượng bet data: new dateData: ${dateData.length} - rowCount: ${betData.rowCount}, hasResult=${dataDate.hasResult}`,
+            `Không khớp số lượng bet data: new dateData: ${dateData.length} - rowCount: ${betData.rowCount}`,
           );
 
           // alert(`Có lỗi xảy ra. Load lại trang`);
@@ -457,7 +454,55 @@ export class ReportService implements OnModuleInit {
           // return last_data; // Or handle this case as needed
         }
       } else {
-        console.log('No need update');
+        console.log('==> No need update number row');
+
+        let currentDataDate = await this.prismaService.data.findUnique({
+          where: {
+            date: date,
+          },
+        });
+
+        if (!currentDataDate) {
+          currentDataDate = {
+            date: date,
+            lastTotalPage: 1,
+            lastTotalRow: 0,
+            data: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+        }
+
+        if (
+          !currentDataDate.data ||
+          currentDataDate.data === 'null' ||
+          currentDataDate.data === '[]'
+        ) {
+        } else {
+          const itemInDb = JSON.parse(currentDataDate.data)[0];
+
+          if (itemInDb.status === 0) {
+            console.log('==> Need update status record');
+            if (betData.sampleData.status === 1) {
+              console.log('==> Have results from server.........');
+              if (currentDataDate.data) {
+                console.log(
+                  '==> Delete data on db ......... Wait next cron time',
+                );
+                // xóa kết quả ngày hôm đó
+                await this.prismaService.data.delete({
+                  where: {
+                    date: date,
+                  },
+                });
+              }
+            } else {
+              console.log('==> Do not have results from server.........');
+            }
+          } else {
+            console.log('==> No need update status record');
+          }
+        }
       }
 
       // Thêm dữ liệu vào mảng betFullData
@@ -1028,8 +1073,16 @@ export class ReportService implements OnModuleInit {
         //   return last_data; // Or handle this case as needed
         // }
       } else {
+        const data = config.data;
+        let sampleData = {
+          status: 0,
+        };
+        if (data.length > 0) {
+          sampleData = data[0];
+        }
         return {
           needUpdate: false,
+          sampleData: sampleData,
         };
       }
     } catch (error) {
@@ -1055,7 +1108,7 @@ export class ReportService implements OnModuleInit {
       url = `${this.baseUrl}/partner/game/${type}?api_key=${this.apiKey}&from_date=${from_date}&to_date=${to_date}&user_uuid=${userUuid}`;
     }
 
-    console.log(url);
+    // console.log(url);
 
     try {
       const response = await fetch(url);

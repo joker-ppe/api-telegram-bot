@@ -34,7 +34,6 @@ model Data {
 
   lastTotalPage Int @default(1)
   lastTotalRow Int @default(0)
-  hasResult Boolean @default(false)
 
   data String
 
