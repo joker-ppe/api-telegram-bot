@@ -9,6 +9,7 @@ export class ReportService implements OnModuleInit {
   private baseUrl: string;
   private apiKey: string;
   private minuteHasResults: number = 34;
+  private isRunningCron = false;
 
   constructor(
     private prismaService: PrismaService,
@@ -31,36 +32,50 @@ export class ReportService implements OnModuleInit {
   }
 
   async fetchAndStoreBets() {
-    const currentDate = new Date();
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: 'Asia/Bangkok',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    });
-    const formattedDate = formatter.format(currentDate);
     console.log('\n----------------------------------------------------\n');
-    console.log(`Fetching at ${formattedDate}`);
 
-    const date = new Date();
+    if (this.isRunningCron) {
+      console.log('Cron job is running. Skip this time.');
+      return;
+    }
 
-    const weekInfo = this.getInfoFromDate(date);
+    this.isRunningCron = true;
 
-    console.log(JSON.stringify(weekInfo));
+    try {
+      const currentDate = new Date();
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Bangkok',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      });
+      const formattedDate = formatter.format(currentDate);
 
-    const parts = formatter.formatToParts(currentDate);
+      console.log(`Fetching at ${formattedDate}`);
 
-    const year = parts.find((part) => part.type === 'year').value;
-    const month = parts.find((part) => part.type === 'month').value;
-    const day = parts.find((part) => part.type === 'day').value;
+      const date = new Date();
 
-    const currentDateString = `${year}-${month}-${day}`;
+      const weekInfo = this.getInfoFromDate(date);
 
-    this.getWinLoseCron(weekInfo.startDate, currentDateString);
+      console.log(JSON.stringify(weekInfo));
+
+      const parts = formatter.formatToParts(currentDate);
+
+      const year = parts.find((part) => part.type === 'year').value;
+      const month = parts.find((part) => part.type === 'month').value;
+      const day = parts.find((part) => part.type === 'day').value;
+
+      const currentDateString = `${year}-${month}-${day}`;
+
+      await this.getWinLoseCron(weekInfo.startDate, currentDateString);
+    } finally {
+      this.isRunningCron = false;
+      console.log('Done cron job');
+    }
   }
 
   ////////////////////////////////////////////////////////////////
@@ -739,7 +754,12 @@ export class ReportService implements OnModuleInit {
     const user = JSON.parse(await this.getWinLose(endDate, endDate, userName));
 
     if (user.level === 5) {
-      let betData = await this.getBetData(endDate, endDate, 'betSlip');
+      let betData = await this.getBetData(
+        endDate,
+        endDate,
+        'betSlip',
+        user.uuid,
+      );
 
       betData = betData.filter((item) => user.uuid === item.user_uuid);
 
@@ -906,23 +926,30 @@ export class ReportService implements OnModuleInit {
     return dates;
   }
 
-  async getBetData(fromDate: string, toDate: string, type: string) {
-    const config = await this.getConfigBet(fromDate, toDate, type);
+  async getBetData(
+    fromDate: string,
+    toDate: string,
+    type: string,
+    userUuid: string,
+  ) {
+    const config = await this.getConfigBet(fromDate, toDate, type, userUuid);
     // console.log(JSON.stringify(users));
     try {
       const totalPage = config.optional.paging_info.total_page;
-      console.log(`bet page ${fromDate} ${toDate}`, totalPage);
+      console.log(`bet page ${type} ${fromDate} -> ${toDate}`, totalPage);
 
       const rowCount = config.optional.paging_info.row_count;
       console.log('bet record', rowCount);
 
       const results = await Promise.all(
         Array.from({ length: totalPage }, (_, i) =>
-          this.fetchBetDataPage(i + 1, fromDate, toDate, type),
+          this.fetchBetDataPage(i + 1, fromDate, toDate, type, userUuid),
         ),
       );
 
       const betData = results.flat(); // Kết hợp tất cả kết quả vào một mảng duy nhất
+
+      console.log('bet data', betData);
 
       if (betData.length === rowCount) {
         return betData;
@@ -951,7 +978,7 @@ export class ReportService implements OnModuleInit {
   ) {
     // console.log(JSON.stringify(users));
     try {
-      const config = await this.getConfigBet(fromDate, toDate, type);
+      const config = await this.getConfigBet(fromDate, toDate, type, null);
 
       const totalPage = config.optional.paging_info.total_page;
       console.log(`Total page from api:`, totalPage);
@@ -969,6 +996,7 @@ export class ReportService implements OnModuleInit {
               fromDate,
               toDate,
               type,
+              null,
             ),
           ),
         );
@@ -1013,10 +1041,21 @@ export class ReportService implements OnModuleInit {
     }
   }
 
-  private async getConfigBet(from_date: string, to_date: string, type: string) {
-    const url = `${this.baseUrl}/partner/game/${type}?api_key=${this.apiKey}&from_date=${from_date}&to_date=${to_date}`;
+  private async getConfigBet(
+    from_date: string,
+    to_date: string,
+    type: string,
+    userUuid: string,
+  ) {
+    let url: string;
 
-    // console.log(url);
+    if (userUuid === null) {
+      url = `${this.baseUrl}/partner/game/${type}?api_key=${this.apiKey}&from_date=${from_date}&to_date=${to_date}`;
+    } else {
+      url = `${this.baseUrl}/partner/game/${type}?api_key=${this.apiKey}&from_date=${from_date}&to_date=${to_date}&user_uuid=${userUuid}`;
+    }
+
+    console.log(url);
 
     try {
       const response = await fetch(url);
@@ -1036,11 +1075,17 @@ export class ReportService implements OnModuleInit {
     fromDate: string,
     toDate: string,
     type: string,
+    userUuid: string,
   ) {
     // showLoadingIndicator(`lịch sử bet ${page}/${totalPage}`)
     // console.log(`lịch sử bet ${page}/${totalPage}`);
+    let url: string;
+    if (userUuid === null) {
+      url = `${this.baseUrl}/partner/game/${type}?api_key=${this.apiKey}&from_date=${fromDate}&to_date=${toDate}&p=${page}`;
+    } else {
+      url = `${this.baseUrl}/partner/game/${type}?api_key=${this.apiKey}&from_date=${fromDate}&to_date=${toDate}&p=${page}&user_uuid=${userUuid}`;
+    }
 
-    const url = `${this.baseUrl}/partner/game/${type}?api_key=${this.apiKey}&from_date=${fromDate}&to_date=${toDate}&p=${page}`;
     return fetch(url)
       .then((response) => {
         if (!response.ok) {

@@ -190,6 +190,7 @@ export class SuperService implements OnModuleInit {
         endDate,
         endDate,
         'betSlip',
+        userName,
       );
 
       betData = betData.filter((item) => user.uuid === item.user_uuid);
