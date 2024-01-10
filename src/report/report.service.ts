@@ -1232,6 +1232,7 @@ export class ReportService implements OnModuleInit {
       let masterCommission = 0;
       let agentCommission = 0;
       let outstanding = 0;
+      let downLineCommission = 0;
 
       parent.children.forEach((child: any) => {
         profit += child.profit;
@@ -1241,6 +1242,26 @@ export class ReportService implements OnModuleInit {
         masterCommission += child.masterCommission;
         agentCommission += child.agentCommission;
         outstanding += child.outstanding;
+
+        if (parent.level < 5) {
+          if (parent.level === 1) {
+            downLineCommission += Math.round(
+              ((child.superCommission + child.downLineCommission) *
+                child.bidPercent) /
+                100,
+            );
+          } else if (parent.level === 2) {
+            downLineCommission += Math.round(
+              ((child.masterCommission + child.downLineCommission) *
+                child.bidPercent) /
+                100,
+            );
+          } else if (parent.level === 3) {
+            downLineCommission += Math.round(
+              (child.agentCommission * child.bidPercent) / 100,
+            );
+          }
+        }
       });
       parent['profit'] = profit;
       parent['companyCommission'] = companyCommission;
@@ -1249,6 +1270,7 @@ export class ReportService implements OnModuleInit {
       parent['masterCommission'] = masterCommission;
       parent['agentCommission'] = agentCommission;
       parent['outstanding'] = outstanding;
+      parent['downLineCommission'] = downLineCommission;
 
       const bidPercent = this.getBidPercentOfUser(
         parent.username,
@@ -1263,12 +1285,19 @@ export class ReportService implements OnModuleInit {
         parent['bidOutside'] = Math.round(
           parent.children.reduce(
             (acc: any, master: any) =>
-              acc + (master.profit * (80 - master.bidPercent)) / 100,
+              acc +
+              ((master.profit + master.downLineCommission) *
+                (80 - master.bidPercent)) /
+                100,
             0,
           ),
         );
       } else {
-        parent['bidOutside'] = (parent.profit * (80 - parent.bidPercent)) / 100;
+        parent['bidOutside'] = Math.round(
+          ((parent.profit + parent.downLineCommission) *
+            (80 - parent.bidPercent)) /
+            100,
+        );
       }
 
       const historySumByDate = {};
