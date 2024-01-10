@@ -11,7 +11,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { DateTime } from 'luxon';
 import { Request, Response, NextFunction } from 'express';
 
-function extractIPv4(ipv6) {
+function extractIPv4(ipv6: string) {
   const ipv4Regex = /::ffff:(\d+\.\d+\.\d+\.\d+)/;
   const match = ipv6.match(ipv4Regex);
   return match ? match[1] : ipv6;
@@ -36,6 +36,7 @@ export class IpWhitelistMiddleware implements NestMiddleware {
         HttpStatus.FORBIDDEN,
       );
     }
+    console.log(`IP ${requestIp} allowed.`);
     next();
   }
 }

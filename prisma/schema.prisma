@@ -11,11 +11,11 @@ datasource db {
 }
 
 model User {
-  id             Int      @id @default(autoincrement())
-  userName       String   @unique
-  email          String?  @unique
+  id             Int     @id @default(autoincrement())
+  userName       String  @unique
+  email          String? @unique
   hashedPassword String
-  
+
   @@map("users") //users id "table's name" in Postgres SQL
 }
 
@@ -31,8 +31,48 @@ model Key {
 
 model Data {
   date String @id
+
+  lastTotalPage Int @default(1)
+  lastTotalRow Int @default(0)
+  hasResult Boolean @default(false)
+
   data String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("data")
 }
 
+model BetData {
+  id             Int      @id @default(autoincrement())
+  user_uuid      String
+  code           String
+  game_type      Int
+  bet_type       Int
+  bet_category   String
+  number         String[]
+  amount         Int
+  price          Int
+  point          Int
+  status         Int
+  result         Int
+  payout         Int
+  term           String
+  term_timestamp BigInt
+  ticket_id      Int
+  source         String
+  created_at     BigInt
+
+  extra_price_agent_default    Int
+  extra_price_master_default   Int
+  extra_price_super_default    Int
+  extra_price_exchange_default Int
+  extra_price_admin_default    Int
+  extra_price_point            Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("bet_data")
+}

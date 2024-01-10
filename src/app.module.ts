@@ -8,9 +8,11 @@ import { ReportModule } from './report/report.module';
 import { SuperService } from './super/super.service';
 import { SuperController } from './super/super.controller';
 import { SuperModule } from './super/super.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     AuthModule,
     UserModule,
     PrismaModule,

@@ -2,11 +2,13 @@ import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BetItem, User } from './dto';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class ReportService implements OnModuleInit {
   private baseUrl: string;
   private apiKey: string;
+  private minuteHasResults: number = 34;
 
   constructor(
     private prismaService: PrismaService,
@@ -17,6 +19,51 @@ export class ReportService implements OnModuleInit {
     this.baseUrl = await this.getBaseUrlFromDatabase();
     this.apiKey = await this.getApiKeyFromDatabase();
   }
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+
+  private sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE, { name: 'fetchAndStoreBets' }) // Đặt tần suất cập nhật theo nhu cầu
+  async handleCron() {
+    await this.fetchAndStoreBets();
+  }
+
+  async fetchAndStoreBets() {
+    const currentDate = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Bangkok',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+    const formattedDate = formatter.format(currentDate);
+    console.log('\n----------------------------------------------------\n');
+    console.log(`Fetching at ${formattedDate}`);
+
+    const date = new Date();
+
+    const weekInfo = this.getInfoFromDate(date);
+
+    console.log(JSON.stringify(weekInfo));
+
+    const parts = formatter.formatToParts(currentDate);
+
+    const year = parts.find((part) => part.type === 'year').value;
+    const month = parts.find((part) => part.type === 'month').value;
+    const day = parts.find((part) => part.type === 'day').value;
+
+    const currentDateString = `${year}-${month}-${day}`;
+
+    this.getWinLoseCron(weekInfo.startDate, currentDateString);
+  }
+
+  ////////////////////////////////////////////////////////////////
 
   async getWinLose(startDate: string, endDate: string, userName: string) {
     const uniqueDatesSearch = this.generateDateRange(startDate, endDate);
@@ -35,102 +82,29 @@ export class ReportService implements OnModuleInit {
     });
     const formattedDate = formatter.format(currentDate);
 
-    const parts = formatter.formatToParts(currentDate);
+    // const parts = formatter.formatToParts(currentDate);
 
-    const year = parts.find((part) => part.type === 'year').value;
-    const month = parts.find((part) => part.type === 'month').value;
-    const day = parts.find((part) => part.type === 'day').value;
-    const hour = parts.find((part) => part.type === 'hour').value;
-    const minute = parts.find((part) => part.type === 'minute').value;
+    // const year = parts.find((part) => part.type === 'year').value;
+    // const month = parts.find((part) => part.type === 'month').value;
+    // const day = parts.find((part) => part.type === 'day').value;
+    // const hour = parts.find((part) => part.type === 'hour').value;
+    // const minute = parts.find((part) => part.type === 'minute').value;
 
     console.log(`Current date: ${formattedDate}`);
 
-    const currentDateString = `${year}-${month}-${day}`;
+    // const currentDateString = `${year}-${month}-${day}`;
 
     let betFullData: BetItem[] = [];
     for (let i = 0; i < uniqueDatesSearch.length; i++) {
       const date = uniqueDatesSearch[i];
-      let hasData = true;
-      let dataDate = await this.prismaService.data.findUnique({
+      const dataDate = await this.prismaService.data.findUnique({
         where: {
           date: date,
         },
       });
 
-      // console.log(`${date} - ${JSON.stringify(dataDate)}`);,
-
-      if (!dataDate) {
-        hasData = false;
-        dataDate = {
-          date: date,
-          data: null,
-        };
-      }
-
-      if (date === currentDateString) {
-        if (
-          !dataDate.data ||
-          JSON.stringify(dataDate.data) === 'null' ||
-          JSON.stringify(dataDate.data) === '[]'
-        ) {
-          // console.log(`${hour} - ${minute}`);
-
-          const betData = await this.getBetData(date, date, 'betLog');
-          dataDate.data = JSON.stringify(betData);
-
-          if (
-            (parseInt(hour) === 18 && parseInt(minute) > 35) ||
-            parseInt(hour) > 18
-          ) {
-            if (hasData) {
-              await this.prismaService.data.update({
-                where: {
-                  date: date,
-                },
-                data: {
-                  data: JSON.stringify(betData),
-                },
-              });
-            } else {
-              await this.prismaService.data.create({
-                data: {
-                  date: date,
-                  data: JSON.stringify(betData),
-                },
-              });
-            }
-          }
-        }
-      } else {
-        if (
-          !dataDate.data ||
-          JSON.stringify(dataDate.data) === 'null' ||
-          JSON.stringify(dataDate.data) === '[]'
-        ) {
-          const betData = await this.getBetData(date, date, 'betLog');
-          if (hasData) {
-            await this.prismaService.data.update({
-              where: {
-                date: date,
-              },
-              data: {
-                data: JSON.stringify(betData),
-              },
-            });
-          } else {
-            await this.prismaService.data.create({
-              data: {
-                date: date,
-                data: JSON.stringify(betData),
-              },
-            });
-          }
-          dataDate.data = JSON.stringify(betData);
-        }
-      }
-
       // Thêm dữ liệu vào mảng betFullData
-      if (dataDate.data) {
+      if (dataDate && dataDate.data) {
         betFullData = betFullData.concat(JSON.parse(dataDate.data));
       }
     }
@@ -296,6 +270,348 @@ export class ReportService implements OnModuleInit {
     }
   }
 
+  async getWinLoseCron(startDate: string, endDate: string) {
+    const currentDate = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Bangkok',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+    const formattedDate = formatter.format(currentDate);
+
+    const parts = formatter.formatToParts(currentDate);
+
+    const year = parts.find((part) => part.type === 'year').value;
+    const month = parts.find((part) => part.type === 'month').value;
+    const day = parts.find((part) => part.type === 'day').value;
+    const hour = parts.find((part) => part.type === 'hour').value;
+    const minute = parts.find((part) => part.type === 'minute').value;
+
+    console.log(`Current date: ${formattedDate}`);
+
+    const currentDateString = `${year}-${month}-${day}`;
+
+    const uniqueDatesSearch = this.generateDateRange(startDate, endDate);
+    console.log(uniqueDatesSearch);
+
+    // let betFullData: BetItem[] = [];
+    for (let i = 0; i < uniqueDatesSearch.length; i++) {
+      const date = uniqueDatesSearch[i];
+      console.log('*******************\nChecking data date: ' + date);
+
+      let hasResultBet = false;
+
+      let dataDate = await this.prismaService.data.findUnique({
+        where: {
+          date: date,
+        },
+      });
+
+      // console.log(`${date} - ${JSON.stringify(dataDate)}`);,
+
+      if (!dataDate) {
+        dataDate = {
+          date: date,
+          lastTotalPage: 1,
+          lastTotalRow: 0,
+          data: null,
+          hasResult: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+      }
+
+      if (currentDateString === date) {
+        if (
+          (parseInt(hour) === 18 && parseInt(minute) > this.minuteHasResults) ||
+          parseInt(hour) > 18
+        ) {
+          if (!dataDate.hasResult) {
+            if (dataDate.data) {
+              // xóa kết quả ngày hôm đó
+              await this.prismaService.data.delete({
+                where: {
+                  date: date,
+                },
+              });
+
+              // update current data date
+              dataDate = {
+                date: date,
+                lastTotalPage: 1,
+                lastTotalRow: 0,
+                data: null,
+                hasResult: false,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              };
+            }
+          }
+          hasResultBet = true;
+        } else {
+          hasResultBet = false;
+        }
+      } else {
+        hasResultBet = true;
+      }
+
+      let lastData = JSON.parse(dataDate.data);
+
+      if (
+        !dataDate.data ||
+        dataDate.data === 'null' ||
+        dataDate.data === '[]'
+      ) {
+        lastData = [];
+      }
+
+      console.log(`Current total page on db: ${dataDate.lastTotalPage}`);
+      console.log(`Current total row on db: ${dataDate.lastTotalRow}`);
+      console.log(`Current data size on db: ${lastData.length}`);
+
+      const betData = await this.getBetDataCron(
+        date,
+        date,
+        'betLog',
+        dataDate.lastTotalPage,
+        dataDate.lastTotalRow,
+      );
+
+      if (betData.needUpdate) {
+        console.log(`results new data: ${betData.betData.length}`);
+        // console.log(`results new data: ${JSON.stringify(betData.betData)}`);
+        const newData = betData.betData.filter(
+          (item: BetItem) =>
+            !lastData.some((lastItem: BetItem) => lastItem.code === item.code),
+        );
+        console.log(`new data no duplicated: ${newData.length}`);
+
+        const dateData = lastData.concat(newData);
+
+        if (dateData.length === betData.rowCount) {
+          dataDate.data = JSON.stringify(dateData);
+          dataDate.lastTotalPage = betData.totalPage;
+          dataDate.lastTotalRow = betData.rowCount;
+          dataDate.hasResult = hasResultBet;
+
+          const currentDataDate = await this.prismaService.data.findUnique({
+            where: {
+              date: date,
+            },
+          });
+
+          if (currentDataDate) {
+            await this.prismaService.data.update({
+              where: {
+                date: date,
+              },
+              data: {
+                data: dataDate.data,
+                lastTotalPage: dataDate.lastTotalPage,
+                lastTotalRow: dataDate.lastTotalRow,
+                hasResult: dataDate.hasResult,
+              },
+            });
+          } else {
+            await this.prismaService.data.create({
+              data: {
+                date: date,
+                data: dataDate.data,
+                lastTotalPage: dataDate.lastTotalPage,
+                lastTotalRow: dataDate.lastTotalRow,
+                hasResult: dataDate.hasResult,
+              },
+            });
+          }
+
+          console.log(
+            `Updated new data: total page now=${dataDate.lastTotalPage}, total row now=${dataDate.lastTotalRow}, hasResult=${dataDate.hasResult}`,
+          );
+        } else {
+          console.error(
+            `Không khớp số lượng bet data: new dateData: ${dateData.length} - rowCount: ${betData.rowCount}, hasResult=${dataDate.hasResult}`,
+          );
+
+          // alert(`Có lỗi xảy ra. Load lại trang`);
+
+          // return last_data; // Or handle this case as needed
+        }
+      } else {
+        console.log('No need update');
+      }
+
+      // Thêm dữ liệu vào mảng betFullData
+      // if (dataDate.data) {
+      //   betFullData = betFullData.concat(JSON.parse(dataDate.data));
+      // }
+    }
+
+    // const listUsers: User[] = await this.getListUsers();
+
+    // return listUsers;
+
+    // if (betFullData && listUsers) {
+    //   const uniqueDates: string[] = Array.from(
+    //     new Set(
+    //       betFullData
+    //         .filter((record: BetItem) => record != null)
+    //         .filter((record: BetItem) => record.term != null)
+    //         .map((record: BetItem) => record.term),
+    //     ),
+    //   );
+    //   uniqueDates.sort((a, b) => a.localeCompare(b));
+
+    //   const listAdmins: User[] = await this.parseData(
+    //     listUsers,
+    //     betFullData,
+    //     uniqueDates,
+    //   );
+
+    //   //   let user: User = null;
+    //   //   return listAdmins;
+    //   // console.log('listAdmins: ' + listAdmins);
+
+    //   const user: User = this.findUser(listAdmins, userName);
+    //   if (user) {
+    //     // user.children.length = 0;
+
+    //     let line = 'admin';
+    //     let title = 'Admin';
+
+    //     const listChildren = [];
+
+    //     let userData = betFullData;
+    //     const listUserUuid = [];
+
+    //     if (user.level === 5) {
+    //       title = 'Hội Viên';
+    //       const master = await this.getUserData(user.parent_uuid);
+    //       const superAdmin = await this.getUserData(master.parent_uuid);
+    //       line = `${superAdmin.parent.full_name}<br/>${master.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
+    //       listUserUuid.push(user.uuid);
+    //     } else if (user.level === 4) {
+    //       title = 'Đại Lý';
+    //       const superAdmin = await this.getUserData(user.parent_uuid);
+    //       line = `${superAdmin.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
+
+    //       user.children.forEach((member) => {
+    //         listChildren.push({
+    //           full_name: member.full_name,
+    //           outstanding: member.outstanding,
+    //           profit: member.profit,
+    //         });
+    //         listUserUuid.push(member.uuid);
+    //       });
+    //     } else if (user.level === 3) {
+    //       title = 'Tổng Đại Lý';
+    //       line = `${user.parent.full_name}<br/>${user.full_name}`;
+
+    //       user.children.forEach((agent) => {
+    //         listChildren.push({
+    //           full_name: agent.full_name,
+    //           outstanding: agent.outstanding,
+    //           profit: agent.profit,
+    //         });
+    //         agent.children.forEach((member) => {
+    //           listUserUuid.push(member.uuid);
+    //         });
+    //       });
+    //     } else if (user.level === 2) {
+    //       title = 'Cổ Đông';
+    //       line = user.full_name;
+    //       user.children.forEach((master) => {
+    //         listChildren.push({
+    //           full_name: master.full_name,
+    //           outstanding: master.outstanding,
+    //           profit: master.profit,
+    //         });
+    //         master.children.forEach((agent) => {
+    //           agent.children.forEach((member) => {
+    //             listUserUuid.push(member.uuid);
+    //           });
+    //         });
+    //       });
+    //     }
+
+    //     if (user.level != 1) {
+    //       userData = betFullData.filter((betSlip) =>
+    //         listUserUuid.includes(betSlip.user_uuid),
+    //       );
+    //     }
+
+    //     userData = userData.filter((betSlip) => betSlip.term === endDate);
+
+    //     const categorizedList = userData.reduce((acc, item) => {
+    //       // Create a key for each combination of bet_type and number
+    //       const key = `${item.bet_type}`;
+    //       if (!acc[key]) {
+    //         acc[key] = [];
+    //       }
+    //       acc[key].push(item);
+    //       return acc;
+    //     }, {});
+
+    //     const summarizeNumbersByBetType = (data) => {
+    //       const summary = {};
+
+    //       for (const betType in data) {
+    //         // summary[betType] = [];
+
+    //         // data[betType].forEach((bet) => {
+    //         //   summary[betType].push({
+    //         //     number: bet.number,
+    //         //     point: bet.point,
+    //         //     price: bet.price,
+    //         //     amount: bet.amount,
+    //         //   });
+    //         // });
+
+    //         // // Sắp xếp mảng theo point
+    //         // summary[betType].sort((a, b) => b.point - a.point);
+
+    //         let point = 0;
+    //         let amount = 0;
+
+    //         data[betType].forEach((bet) => {
+    //           point += bet.point;
+    //           amount += bet.amount;
+    //         });
+
+    //         summary[betType] = {
+    //           point: point,
+    //           amount: amount,
+    //         };
+    //       }
+
+    //       return summary;
+    //     };
+
+    //     const summarizedNumbers = summarizeNumbersByBetType(categorizedList);
+    //     // console.log(categorizedList);
+
+    //     user['line'] = line;
+    //     user['title'] = title;
+    //     user['list_children'] = listChildren;
+    //     user['data_bet'] = summarizedNumbers;
+
+    //     // console.log(user['data']);
+
+    //     return JSON.stringify(user);
+    //   }
+
+    //   console.log('Not found');
+    //   throw new NotFoundException('Not found');
+    // } else {
+    //   console.log('Not found data source');
+    //   throw new NotFoundException('Not found data source');
+    // }
+  }
+
   async getTotalOutsideBid(startDate: string, endDate: string) {
     const admin = JSON.parse(
       await this.getWinLose(startDate, endDate, 'admin'),
@@ -419,180 +735,6 @@ export class ReportService implements OnModuleInit {
     return JSON.stringify(user);
   }
 
-  async getUserOsNumber(endDate: string, userName: string) {
-    const user = JSON.parse(await this.getWinLose(endDate, endDate, userName));
-
-    if (user.level === 5 || user.level === 1) {
-      const uniqueDatesSearch = this.generateDateRange(endDate, endDate);
-      console.log(uniqueDatesSearch);
-
-      const currentDate = new Date();
-      const formatter = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'Asia/Bangkok',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      });
-      const formattedDate = formatter.format(currentDate);
-
-      const parts = formatter.formatToParts(currentDate);
-
-      const year = parts.find((part) => part.type === 'year').value;
-      const month = parts.find((part) => part.type === 'month').value;
-      const day = parts.find((part) => part.type === 'day').value;
-      const hour = parts.find((part) => part.type === 'hour').value;
-      const minute = parts.find((part) => part.type === 'minute').value;
-
-      console.log(`Current date: ${formattedDate}`);
-
-      const currentDateString = `${year}-${month}-${day}`;
-
-      let betFullData: BetItem[] = [];
-      for (let i = 0; i < uniqueDatesSearch.length; i++) {
-        const date = uniqueDatesSearch[i];
-        let hasData = true;
-        let dataDate = await this.prismaService.data.findUnique({
-          where: {
-            date: date,
-          },
-        });
-
-        if (!dataDate) {
-          hasData = false;
-          dataDate = {
-            date: date,
-            data: null,
-          };
-        }
-
-        if (date === currentDateString) {
-          if (
-            !dataDate.data ||
-            dataDate.data === 'null' ||
-            dataDate.data === '[]'
-          ) {
-            // console.log(`${hour} - ${minute}`);
-
-            const betData = await this.getBetData(date, date, 'betLog');
-            dataDate.data = JSON.stringify(betData);
-
-            if (
-              (parseInt(hour) === 18 && parseInt(minute) > 35) ||
-              parseInt(hour) > 18
-            ) {
-              if (hasData) {
-                await this.prismaService.data.update({
-                  where: {
-                    date: date,
-                  },
-                  data: {
-                    data: JSON.stringify(betData),
-                  },
-                });
-              } else {
-                await this.prismaService.data.create({
-                  data: {
-                    date: date,
-                    data: JSON.stringify(betData),
-                  },
-                });
-              }
-            }
-          }
-        } else {
-          if (
-            !dataDate.data ||
-            dataDate.data === 'null' ||
-            dataDate.data === '[]'
-          ) {
-            const betData = await this.getBetData(date, date, 'betLog');
-            if (hasData) {
-              await this.prismaService.data.update({
-                where: {
-                  date: date,
-                },
-                data: {
-                  data: JSON.stringify(betData),
-                },
-              });
-            } else {
-              await this.prismaService.data.create({
-                data: {
-                  date: date,
-                  data: JSON.stringify(betData),
-                },
-              });
-            }
-            dataDate.data = JSON.stringify(betData);
-          }
-        }
-
-        // Thêm dữ liệu vào mảng betFullData
-        if (dataDate.data) {
-          betFullData = betFullData.concat(JSON.parse(dataDate.data));
-        }
-      }
-
-      let userData = betFullData;
-
-      if (user.level === 5) {
-        userData = betFullData.filter(
-          (betSlip) => betSlip.user_uuid === user.uuid,
-        );
-      }
-
-      const categorizedList = userData.reduce((acc, item) => {
-        // Create a key for each combination of bet_type and number
-        const key = `${item.bet_type}`;
-        if (!acc[key]) {
-          acc[key] = [];
-        }
-        acc[key].push(item);
-        return acc;
-      }, {});
-
-      const summarizeNumbersByBetType = (data) => {
-        const summary = {};
-
-        for (const betType in data) {
-          summary[betType] = [];
-
-          data[betType].forEach((bet) => {
-            summary[betType].push({
-              number: bet.number,
-              point: bet.point,
-              price: bet.price,
-              amount: bet.amount,
-            });
-          });
-
-          // Sắp xếp mảng theo point
-          summary[betType].sort((a, b) => b.point - a.point);
-        }
-
-        return summary;
-      };
-
-      const summarizedNumbers = summarizeNumbersByBetType(categorizedList);
-      // console.log(categorizedList);
-
-      user['data'] = summarizedNumbers;
-    } else {
-      user['data'] = [];
-    }
-
-    user.parent = {};
-
-    // const userBetData = [];
-    // userBetData.forEach((betSlip) => {});
-
-    return JSON.stringify(user);
-  }
-
   async getUserOsBet(endDate: string, userName: string) {
     const user = JSON.parse(await this.getWinLose(endDate, endDate, userName));
 
@@ -624,13 +766,6 @@ export class ReportService implements OnModuleInit {
     return JSON.stringify(user);
   }
 
-  async getReportNumber(endDate: string) {
-    const user = JSON.parse(await this.getUserOsNumber(endDate, 'admin'));
-
-    const data = user.data;
-
-    return data;
-  }
   ////////////////////////////////////////////////////////////////
   private async getUserData(uuid: string) {
     const url = `${this.baseUrl}/partner/user/index?api_key=${this.apiKey}&uuid=${uuid}&type=1`;
@@ -771,19 +906,19 @@ export class ReportService implements OnModuleInit {
     return dates;
   }
 
-  async getBetData(from_date: string, to_date: string, type: string) {
-    const config = await this.getConfigBet(from_date, to_date, type);
+  async getBetData(fromDate: string, toDate: string, type: string) {
+    const config = await this.getConfigBet(fromDate, toDate, type);
     // console.log(JSON.stringify(users));
     try {
       const totalPage = config.optional.paging_info.total_page;
-      console.log('bet page', totalPage);
+      console.log(`bet page ${fromDate} ${toDate}`, totalPage);
 
       const rowCount = config.optional.paging_info.row_count;
       console.log('bet record', rowCount);
 
       const results = await Promise.all(
         Array.from({ length: totalPage }, (_, i) =>
-          this.fetchBetDataPage(i + 1, from_date, to_date, type),
+          this.fetchBetDataPage(i + 1, fromDate, toDate, type),
         ),
       );
 
@@ -803,6 +938,77 @@ export class ReportService implements OnModuleInit {
     } catch (error) {
       console.error('Error loading all data:', error);
       return null; // Or handle this error as needed
+    } finally {
+    }
+  }
+
+  async getBetDataCron(
+    fromDate: string,
+    toDate: string,
+    type: string,
+    lastTotalPage: number,
+    lastTotalRow: number,
+  ) {
+    // console.log(JSON.stringify(users));
+    try {
+      const config = await this.getConfigBet(fromDate, toDate, type);
+
+      const totalPage = config.optional.paging_info.total_page;
+      console.log(`Total page from api:`, totalPage);
+
+      const rowCount = config.optional.paging_info.row_count;
+      console.log('Total row from api:', rowCount);
+
+      if (rowCount !== lastTotalRow) {
+        // lấy thêm data
+        const results = await Promise.all(
+          Array.from({ length: totalPage - lastTotalPage + 1 }, (_, i) =>
+            this.fetchBetDataPage(
+              i + 1, // lấy data từ page cũ
+              // i + 1,
+              fromDate,
+              toDate,
+              type,
+            ),
+          ),
+        );
+
+        const betData = results.flat(); // Kết hợp tất cả kết quả vào một mảng duy nhất
+
+        return {
+          needUpdate: true,
+          betData: betData,
+          rowCount: rowCount,
+          totalPage: totalPage,
+        };
+
+        // console.log(`results new data: ${betData.length}`);
+        // const newData = betData.filter((item) => !last_data.includes(item));
+        // console.log(`new data: ${newData.length}`);
+
+        // const dateData = last_data.concat(newData);
+
+        // if (dateData.length === rowCount) {
+        //   return dateData;
+        // } else {
+        //   console.error(
+        //     `Không khớp số lượng bet data: betData: ${dateData.length} - rowCount: ${rowCount}`,
+        //   );
+
+        //   // alert(`Có lỗi xảy ra. Load lại trang`);
+
+        //   return last_data; // Or handle this case as needed
+        // }
+      } else {
+        return {
+          needUpdate: false,
+        };
+      }
+    } catch (error) {
+      console.error('Error loading all data:', error);
+      return {
+        needUpdate: false,
+      }; // Or handle this error as needed
     } finally {
     }
   }
@@ -827,14 +1033,14 @@ export class ReportService implements OnModuleInit {
 
   private async fetchBetDataPage(
     page: number,
-    from_date: string,
-    to_date: string,
+    fromDate: string,
+    toDate: string,
     type: string,
   ) {
     // showLoadingIndicator(`lịch sử bet ${page}/${totalPage}`)
     // console.log(`lịch sử bet ${page}/${totalPage}`);
 
-    const url = `${this.baseUrl}/partner/game/${type}?api_key=${this.apiKey}&from_date=${from_date}&to_date=${to_date}&p=${page}`;
+    const url = `${this.baseUrl}/partner/game/${type}?api_key=${this.apiKey}&from_date=${fromDate}&to_date=${toDate}&p=${page}`;
     return fetch(url)
       .then((response) => {
         if (!response.ok) {
@@ -1215,7 +1421,7 @@ export class ReportService implements OnModuleInit {
       const month = (date.getMonth() + 1).toString().padStart(2, '0');
       const year = date.getFullYear();
 
-      return `${day}/${month}/${year}`;
+      return `${year}-${month}-${day}`;
     };
 
     return {
