@@ -131,6 +131,8 @@ export class ReportService implements OnModuleInit {
         await this.sendMessage(
           `Outstanding hiện tại: ${admin.outstanding.toLocaleString('en-US')}`,
         );
+
+        this.outstandingData.set(endDate, 1);
       }
     }
 
