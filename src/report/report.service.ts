@@ -8,8 +8,13 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 export class ReportService implements OnModuleInit {
   private baseUrl: string;
   private apiKey: string;
-  private minuteHasResults: number = 34;
+  // private minuteHasResults: number = 34;
   private isRunningCron = false;
+
+  private token = '6695572072:AAGxx6Rn8wyTshwhFfOnfSY6AKfhSvJIa6o'; // Replace with your Telegram bot's token
+  private chatId = '-1002109063811';
+
+  private outstandingData = new Map<string, number>();
 
   constructor(
     private prismaService: PrismaService,
@@ -20,6 +25,20 @@ export class ReportService implements OnModuleInit {
     this.baseUrl = await this.getBaseUrlFromDatabase();
     this.apiKey = await this.getApiKeyFromDatabase();
   }
+
+  private sendMessage = async (message: string) => {
+    const url = `https://api.telegram.org/bot${
+      this.token
+    }/sendMessage?chat_id=${this.chatId}&text=${encodeURIComponent(message)}`;
+
+    try {
+      const response = await fetch(url, { method: 'GET' });
+      const data = await response.json();
+      console.log('Message sent: ', data);
+    } catch (error) {
+      console.error('Error sending message: ', error);
+    }
+  };
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
   private sleep(ms: number) {
@@ -72,6 +91,8 @@ export class ReportService implements OnModuleInit {
       const currentDateString = `${year}-${month}-${day}`;
 
       await this.getWinLoseCron(weekInfo.startDate, currentDateString);
+
+      await this.getAdminInfo(currentDateString);
     } finally {
       this.isRunningCron = false;
       console.log('Done cron job');
@@ -79,6 +100,45 @@ export class ReportService implements OnModuleInit {
   }
 
   ////////////////////////////////////////////////////////////////
+
+  private roundDownToNearestTenPower(num: number): number {
+    const digits = Math.floor(Math.log10(num));
+    const divisor = Math.pow(10, digits);
+    return Math.floor(num / divisor) * divisor;
+  }
+
+  async getAdminInfo(endDate: string) {
+    const admin = JSON.parse(await this.getWinLose(endDate, endDate, 'admin'));
+
+    const currentOutstanding = admin.outstanding;
+    let oldOutstanding = this.outstandingData.get(endDate);
+
+    if (!oldOutstanding) {
+      oldOutstanding = 0;
+    }
+
+    if (currentOutstanding - oldOutstanding >= 1000000000) {
+      this.outstandingData.set(
+        endDate,
+        this.roundDownToNearestTenPower(currentOutstanding),
+      );
+
+      await this.sendMessage(
+        `Outstanding hiện tại: ${admin.outstanding.toLocaleString('en-US')}`,
+      );
+    } else {
+      if (oldOutstanding === 0) {
+        await this.sendMessage(
+          `Outstanding hiện tại: ${admin.outstanding.toLocaleString('en-US')}`,
+        );
+      }
+    }
+
+    console.table({
+      Ngưỡng: this.outstandingData.get(endDate).toLocaleString('en-US'),
+      'Hiện tại': admin.outstanding.toLocaleString('en-US'),
+    });
+  }
 
   async getWinLose(startDate: string, endDate: string, userName: string) {
     const uniqueDatesSearch = this.generateDateRange(startDate, endDate);
@@ -341,40 +401,6 @@ export class ReportService implements OnModuleInit {
         };
       }
 
-      // if (currentDateString === date) {
-      //   if (
-      //     (parseInt(hour) === 18 && parseInt(minute) > this.minuteHasResults) ||
-      //     parseInt(hour) > 18
-      //   ) {
-      //     if (!dataDate.hasResult) {
-      //       if (dataDate.data) {
-      //         // xóa kết quả ngày hôm đó
-      //         await this.prismaService.data.delete({
-      //           where: {
-      //             date: date,
-      //           },
-      //         });
-
-      //         // update current data date
-      //         dataDate = {
-      //           date: date,
-      //           lastTotalPage: 1,
-      //           lastTotalRow: 0,
-      //           data: null,
-
-      //           createdAt: new Date(),
-      //           updatedAt: new Date(),
-      //         };
-      //       }
-      //     }
-      //     hasResultBet = true;
-      //   } else {
-      //     hasResultBet = false;
-      //   }
-      // } else {
-      //   hasResultBet = true;
-      // }
-
       let lastData = JSON.parse(dataDate.data);
 
       if (
@@ -444,6 +470,10 @@ export class ReportService implements OnModuleInit {
           console.log(
             `Updated new data: total page now = ${dataDate.lastTotalPage}, total row now = ${dataDate.lastTotalRow}`,
           );
+
+          // await this.sendMessage(
+          //   `Sync at: ${formattedDate}\n${date} => New record: ${newData.length} - Total record now: ${dataDate.lastTotalRow}`,
+          // );
         } else {
           console.error(
             `Không khớp số lượng bet data: new dateData: ${dateData.length} - rowCount: ${betData.rowCount}`,
@@ -485,6 +515,11 @@ export class ReportService implements OnModuleInit {
             console.log('==> Need update status record');
             if (betData.sampleData.status === 1) {
               console.log('==> Have results from server.........');
+
+              await this.sendMessage(
+                `Sync at: ${formattedDate}\n${date} ==> Have results from server.........'`,
+              );
+
               if (currentDataDate.data) {
                 console.log(
                   '==> Delete data on db ......... Wait next cron time',
