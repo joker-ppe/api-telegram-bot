@@ -120,23 +120,33 @@ export class ReportService implements OnModuleInit {
       oldOutstanding = 0;
     }
 
-    if (currentOutstanding - oldOutstanding >= 1000000000) {
-      this.outstandingData.set(
-        endDate,
-        this.roundDownToNearestTenPower(currentOutstanding),
-      );
-
-      await this.sendMessage(
-        `Outstanding hiện tại: ${admin.outstanding.toLocaleString('en-US')}`,
-      );
-    } else {
-      if (oldOutstanding === 0) {
-        await this.sendMessage(
-          `Outstanding hiện tại: ${admin.outstanding.toLocaleString('en-US')}`,
+    if (currentOutstanding > 0) {
+      if (currentOutstanding - oldOutstanding >= 1000000000) {
+        this.outstandingData.set(
+          endDate,
+          this.roundDownToNearestTenPower(currentOutstanding),
         );
 
-        this.outstandingData.set(endDate, 1);
+        await this.sendMessage(
+          `Os hiện tại: ${admin.outstanding.toLocaleString('en-US')}`,
+        );
+      } else {
+        if (oldOutstanding === 0) {
+          await this.sendMessage(
+            `Os hiện tại: ${admin.outstanding.toLocaleString('en-US')}`,
+          );
+
+          this.outstandingData.set(endDate, 1);
+        }
       }
+    }
+
+    if (currentOutstanding === 0 && oldOutstanding !== 0) {
+      this.outstandingData.set(endDate, 0);
+
+      await this.sendMessage(
+        `Thắng thua hôm nay: ${admin.profit.toLocaleString('en-US')}`,
+      );
     }
 
     console.table({
