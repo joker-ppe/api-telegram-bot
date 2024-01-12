@@ -27,6 +27,7 @@ export class ReportService implements OnModuleInit {
   }
 
   private sendMessage = async (message: string) => {
+    // console.log(message);
     const url = `https://api.telegram.org/bot${
       this.token
     }/sendMessage?chat_id=${this.chatId}&text=${encodeURIComponent(message)}`;
@@ -45,7 +46,7 @@ export class ReportService implements OnModuleInit {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  @Cron(CronExpression.EVERY_MINUTE, { name: 'fetchAndStoreBets' }) // Đặt tần suất cập nhật theo nhu cầu
+  @Cron(CronExpression.EVERY_30_SECONDS, { name: 'fetchAndStoreBets' }) // Đặt tần suất cập nhật theo nhu cầu
   async handleCron() {
     await this.fetchAndStoreBets();
   }
@@ -92,10 +93,12 @@ export class ReportService implements OnModuleInit {
 
       await this.getWinLoseCron(weekInfo.startDate, currentDateString);
 
+      console.log('################################');
+
       await this.getAdminInfo(currentDateString);
     } finally {
       this.isRunningCron = false;
-      console.log('Done cron job');
+      console.log('===========>         Done cron job');
     }
   }
 
