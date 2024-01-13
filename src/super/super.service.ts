@@ -55,18 +55,14 @@ export class SuperService implements OnModuleInit {
       await this.reportService.getWinLose(startDate, endDate, 'admin'),
     );
 
-    let supers = admin.children.filter((child: User) => {
-      const isSuperUser = superUserName.includes(child.full_name);
-      // console.log(`Child: ${child.full_name}, Is SuperUser: ${isSuperUser}`);
-      return isSuperUser;
-    });
-
-    // console.log(masters);
-
-    supers = supers.filter(
-      (sup: User) => sup.profit !== 0 || sup.outstanding !== 0,
+    const superUserNameSet = new Set(superUserName);
+    const supers = admin.children.filter(
+      (child: User) =>
+        superUserNameSet.has(child.full_name) &&
+        (child.profit !== 0 || child.outstanding !== 0),
     );
-    supers.sort((a: User, b: User) => (a.profit > b.profit ? -1 : 1));
+
+    supers.sort((a: User, b: User) => b.profit - a.profit);
     return JSON.stringify(supers);
   }
 
@@ -85,26 +81,15 @@ export class SuperService implements OnModuleInit {
       await this.reportService.getWinLose(startDate, endDate, 'admin'),
     );
 
-    const supers = admin.children.filter((child: User) => {
-      const isSuperUser = superUserName.includes(child.full_name);
-      // console.log(`Child: ${child.full_name}, Is SuperUser: ${isSuperUser}`);
-      return isSuperUser;
-    });
+    const superUserNameSet = new Set(superUserName);
+    const masters = admin.children
+      .filter((child: User) => superUserNameSet.has(child.full_name))
+      .flatMap((sup: User) => sup.children)
+      .filter(
+        (master: User) => master.profit !== 0 || master.outstanding !== 0,
+      );
 
-    let masters: User[] = [];
-
-    // console.log(supers);
-
-    supers.forEach((sup: User) => {
-      masters = masters.concat(sup.children);
-    });
-
-    // console.log(masters);
-
-    masters = masters.filter(
-      (master) => master.profit !== 0 || master.outstanding !== 0,
-    );
-    masters.sort((a, b) => (a.profit > b.profit ? -1 : 1));
+    masters.sort((a, b) => b.profit - a.profit);
     return JSON.stringify(masters);
   }
 
@@ -117,24 +102,19 @@ export class SuperService implements OnModuleInit {
       await this.reportService.getWinLose(startDate, endDate, 'admin'),
     );
 
-    const supers = admin.children.filter((child: User) => {
-      const isSuperUser = superUserName.includes(child.full_name);
-      // console.log(`Child: ${child.full_name}, Is SuperUser: ${isSuperUser}`);
-      return isSuperUser;
-    });
+    const superUserNameSet = new Set(superUserName);
+    const supers = admin.children.filter((child: User) =>
+      superUserNameSet.has(child.full_name),
+    );
 
-    let agents: User[] = [];
-
-    supers.forEach((sup: User) => {
-      sup.children.forEach((master: User) => {
-        agents = agents.concat(master.children);
-      });
-    });
+    let agents = supers.flatMap((sup: User) =>
+      sup.children.flatMap((master: User) => master.children),
+    );
 
     agents = agents.filter(
-      (agent) => agent.profit !== 0 || agent.outstanding !== 0,
+      (agent: User) => agent.profit !== 0 || agent.outstanding !== 0,
     );
-    agents.sort((a, b) => (a.profit > b.profit ? -1 : 1));
+    agents.sort((a: User, b: User) => b.profit - a.profit);
     return JSON.stringify(agents);
   }
 
@@ -151,26 +131,21 @@ export class SuperService implements OnModuleInit {
       await this.reportService.getWinLose(startDate, endDate, 'admin'),
     );
 
-    const supers = admin.children.filter((child: User) => {
-      const isSuperUser = superUserName.includes(child.full_name);
-      // console.log(`Child: ${child.full_name}, Is SuperUser: ${isSuperUser}`);
-      return isSuperUser;
-    });
+    const superUserNameSet = new Set(superUserName);
+    const supers = admin.children.filter((child: User) =>
+      superUserNameSet.has(child.full_name),
+    );
 
-    let members: User[] = [];
-
-    supers.forEach((sup: User) => {
-      sup.children.forEach((master: User) => {
-        master.children.forEach((agent: User) => {
-          members = members.concat(agent.children);
-        });
-      });
-    });
+    let members = supers.flatMap((sup: User) =>
+      sup.children.flatMap((master: User) =>
+        master.children.flatMap((agent) => agent.children),
+      ),
+    );
 
     members = members.filter(
-      (member) => member.profit !== 0 || member.outstanding !== 0,
+      (member: User) => member.profit !== 0 || member.outstanding !== 0,
     );
-    members.sort((a, b) => (a.profit > b.profit ? -1 : 1));
+    members.sort((a: User, b: User) => b.profit - a.profit);
     return JSON.stringify(members);
   }
 
