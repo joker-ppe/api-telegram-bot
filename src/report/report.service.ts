@@ -742,9 +742,11 @@ export class ReportService implements OnModuleInit {
       await this.getWinLose(startDate, endDate, 'admin'),
     );
 
-    const superAdmin = admin.children
-      .filter((sup: User) => sup.profit !== 0 || sup.outstanding !== 0)
-      .sort((a: User, b: User) => b.profit - a.profit);
+    let superAdmin: User[] = admin.children;
+    superAdmin = superAdmin.filter(
+      (sup) => sup.profit !== 0 || sup.outstanding !== 0,
+    );
+    superAdmin.sort((a, b) => (a.profit > b.profit ? -1 : 1));
 
     return JSON.stringify(superAdmin);
   }
@@ -754,11 +756,19 @@ export class ReportService implements OnModuleInit {
       await this.getWinLose(startDate, endDate, 'admin'),
     );
 
-    const masters = admin.children
-      .flatMap((sup: User) => sup.children)
-      .filter((master: User) => master.profit !== 0 || master.outstanding !== 0)
-      .sort((a: User, b: User) => b.profit - a.profit);
+    const supers = admin.children;
+    let masters: User[] = [];
 
+    // console.log(masters);
+
+    supers.forEach((sup: User) => {
+      masters = masters.concat(sup.children);
+    });
+
+    masters = masters.filter(
+      (master) => master.profit !== 0 || master.outstanding !== 0,
+    );
+    masters.sort((a, b) => (a.profit > b.profit ? -1 : 1));
     return JSON.stringify(masters);
   }
 
@@ -767,11 +777,17 @@ export class ReportService implements OnModuleInit {
       await this.getWinLose(startDate, endDate, 'admin'),
     );
 
-    const agents = admin.children
-      .flatMap((sup: User) => sup.children.flatMap((master) => master.children))
-      .filter((agent: User) => agent.profit !== 0 || agent.outstanding !== 0)
-      .sort((a: User, b: User) => b.profit - a.profit);
+    let agents: User[] = [];
 
+    admin.children.forEach((sup: User) => {
+      sup.children.forEach((master: User) => {
+        agents = agents.concat(master.children);
+      });
+    });
+    agents = agents.filter(
+      (agent) => agent.profit !== 0 || agent.outstanding !== 0,
+    );
+    agents.sort((a, b) => (a.profit > b.profit ? -1 : 1));
     return JSON.stringify(agents);
   }
 
@@ -780,15 +796,19 @@ export class ReportService implements OnModuleInit {
       await this.getWinLose(startDate, endDate, 'admin'),
     );
 
-    const members = admin.children
-      .flatMap((sup: User) =>
-        sup.children.flatMap((master) =>
-          master.children.flatMap((agent) => agent.children),
-        ),
-      )
-      .filter((member: User) => member.profit !== 0 || member.outstanding !== 0)
-      .sort((a: User, b: User) => b.profit - a.profit);
+    let members: User[] = [];
 
+    admin.children.forEach((sup: User) => {
+      sup.children.forEach((master: User) => {
+        master.children.forEach((agent: User) => {
+          members = members.concat(agent.children);
+        });
+      });
+    });
+    members = members.filter(
+      (member) => member.profit !== 0 || member.outstanding !== 0,
+    );
+    members.sort((a, b) => (a.profit > b.profit ? -1 : 1));
     return JSON.stringify(members);
   }
 
@@ -802,8 +822,15 @@ export class ReportService implements OnModuleInit {
       await this.getWinLose(startDate, endDate, userName),
     );
 
-    const yesterdayData = user.history[yesterday] ?? 0;
-    const todayData = user.history[endDate] ?? 0;
+    let yesterdayData = user.history[yesterday];
+    if (!yesterdayData) {
+      yesterdayData = 0;
+    }
+
+    let todayData = user.history[endDate];
+    if (!todayData) {
+      todayData = 0;
+    }
 
     user['yesterdayData'] = yesterdayData;
     user['todayData'] = todayData;
@@ -821,16 +848,30 @@ export class ReportService implements OnModuleInit {
   async getUserOsBet(endDate: string, userName: string) {
     const user = JSON.parse(await this.getWinLose(endDate, endDate, userName));
 
-    user['data'] =
-      user.level === 5
-        ? (await this.getBetData(endDate, endDate, 'betSlip', user.uuid))
-            .filter((item) => user.uuid === item.user_uuid)
-            .sort((a, b) =>
-              a.bet_type !== b.bet_type
-                ? a.bet_type - b.bet_type
-                : b.point - a.point,
-            )
-        : [];
+    if (user.level === 5) {
+      let betData = await this.getBetData(
+        endDate,
+        endDate,
+        'betSlip',
+        user.uuid,
+      );
+
+      betData = betData.filter((item) => user.uuid === item.user_uuid);
+
+      // console.log(betData);
+
+      betData.sort((a, b) => {
+        if (a.bet_type !== b.bet_type) {
+          return a.bet_type - b.bet_type; // Compare by property1 first
+        } else {
+          return b.point - a.point;
+        }
+      });
+
+      user['data'] = betData;
+    } else {
+      user['data'] = [];
+    }
 
     user.parent = {};
 
@@ -1207,20 +1248,59 @@ export class ReportService implements OnModuleInit {
 
           let listAdmins = listUsers.filter((user) => user.level === 1);
 
-          const processChildren = (children: User[]) => {
-            return children.map((child) => ({
-              ...child,
-              children: this.addDataToListUsers(child.children, listUsersInfo),
-            }));
-          };
+          listAdmins.forEach((admin: User) => {
+            // admin.children = addDataToListUsers(admin.children, listUsersInfo);
 
-          listAdmins = listAdmins.map((admin) => ({
-            ...admin,
-            children: processChildren(admin.children).map((superAdmin) => ({
-              ...superAdmin,
-              children: processChildren(superAdmin.children),
-            })),
-          }));
+            admin.children.forEach((superAdmin: User) => {
+              // superAdmin.children = addDataToListUsers(superAdmin.children, listUsersInfo);
+
+              superAdmin.children.forEach((master: User) => {
+                master.children = this.addDataToListUsers(
+                  master.children,
+                  listUsersInfo,
+                );
+              });
+            });
+          });
+
+          listAdmins.forEach((admin: User) => {
+            // admin.children = addDataToListUsers(admin.children, listUsersInfo);
+
+            admin.children.forEach((superAdmin: User) => {
+              superAdmin.children = this.addDataToListUsers(
+                superAdmin.children,
+                listUsersInfo,
+              );
+
+              superAdmin.children.forEach((master: User) => {
+                master.children = this.addDataToListUsers(
+                  master.children,
+                  listUsersInfo,
+                );
+              });
+            });
+          });
+
+          listAdmins.forEach((admin: User) => {
+            admin.children = this.addDataToListUsers(
+              admin.children,
+              listUsersInfo,
+            );
+
+            admin.children.forEach((superAdmin: User) => {
+              superAdmin.children = this.addDataToListUsers(
+                superAdmin.children,
+                listUsersInfo,
+              );
+
+              superAdmin.children.forEach((master: User) => {
+                master.children = this.addDataToListUsers(
+                  master.children,
+                  listUsersInfo,
+                );
+              });
+            });
+          });
 
           listAdmins = this.addDataToListUsers(listAdmins, listUsersInfo);
 
