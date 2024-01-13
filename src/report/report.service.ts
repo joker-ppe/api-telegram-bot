@@ -26,7 +26,7 @@ export class ReportService implements OnModuleInit {
     this.apiKey = await this.getApiKeyFromDatabase();
   }
 
-  private sendMessage = async (message: string) => {
+  sendMessage = async (message: string) => {
     // console.log(message);
     const url = `https://api.telegram.org/bot${
       this.token

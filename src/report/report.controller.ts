@@ -147,17 +147,14 @@ export class ReportController {
     );
   }
 
-  // @Get('user/os_number')
-  // async GetUserOsNumber(
-  //   @Query('endDate') endDate: string,
-  //   @Query('userName') userName: string,
-  //   @Res() response: Response,
-  // ) {
-  //   response.setHeader('Content-Type', 'application/json');
-  //   return response.send(
-  //     await this.reportService.getUserOsNumber(endDate, userName),
-  //   );
-  // }
+  @Get('user/send_message_from_bot')
+  async GetUserOsNumber(
+    @Query('message') message: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+    return response.send(await this.reportService.sendMessage(message));
+  }
 
   @Get('user/os_bet')
   async GetUserOsBet(
