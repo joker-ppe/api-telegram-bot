@@ -78,12 +78,6 @@ export class ReportService implements OnModuleInit {
 
       console.log(`Fetching at ${formattedDate}`);
 
-      const date = new Date();
-
-      const weekInfo = this.getWeekOfDate(date);
-
-      console.log(JSON.stringify(weekInfo));
-
       const parts = formatter.formatToParts(currentDate);
 
       const year = parts.find((part) => part.type === 'year').value;
@@ -92,11 +86,17 @@ export class ReportService implements OnModuleInit {
 
       const currentDateString = `${year}-${month}-${day}`;
 
+      const date = new Date(this.createDateFromDateString(currentDateString));
+
+      const weekInfo = this.getWeekOfDate(date);
+
+      console.log(JSON.stringify(weekInfo));
+
       await this.getWinLoseCron(weekInfo.startDate, currentDateString);
 
       console.log('################################');
 
-      await this.getAdminInfo(currentDateString);
+      // await this.getAdminInfo(currentDateString);
     } finally {
       this.isRunningCron = false;
       console.log('===========>         Done cron job');
