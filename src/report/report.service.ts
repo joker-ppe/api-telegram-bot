@@ -106,14 +106,7 @@ export class ReportService implements OnModuleInit {
   ////////////////////////////////////////////////////////////////
 
   private roundDownToNearestTenPower(num: number): number {
-    const digits = Math.floor(Math.log10(num));
-    // Lấy số mũ chính xác
-    const decimalPlaces = Math.pow(10, digits - 1);
-    const divisor = Math.pow(10, decimalPlaces);
-    const isNegative = num < 0;
-    return isNegative
-      ? Math.floor(num / divisor) * divisor * 10
-      : Math.floor(num / divisor) * divisor;
+    return Math.floor(num / 1e9) * 1e9;
   }
 
   async getAdminInfo(endDate: string) {
