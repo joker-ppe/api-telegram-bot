@@ -51,22 +51,15 @@ export class SuperService implements OnModuleInit {
 
     // console.log(superUserName);
 
-    const admin = JSON.parse(
+    const admin: User = JSON.parse(
       await this.reportService.getWinLose(startDate, endDate, 'admin'),
     );
 
-    let supers = admin.children.filter((child: User) => {
-      const isSuperUser = superUserName.includes(child.full_name);
-      // console.log(`Child: ${child.full_name}, Is SuperUser: ${isSuperUser}`);
-      return isSuperUser;
-    });
+    const supers = admin.children
+      .filter((child) => superUserName.includes(child.full_name))
+      .filter((sup) => sup.profit !== 0 || sup.outstanding !== 0)
+      .sort((a, b) => b.profit - a.profit); // Sắp xếp giảm dần theo lợi nhuận
 
-    // console.log(masters);
-
-    supers = supers.filter(
-      (sup: User) => sup.profit !== 0 || sup.outstanding !== 0,
-    );
-    supers.sort((a: User, b: User) => (a.profit > b.profit ? -1 : 1));
     return JSON.stringify(supers);
   }
 
@@ -81,30 +74,16 @@ export class SuperService implements OnModuleInit {
 
     // console.log(superUserName);
 
-    const admin = JSON.parse(
+    const admin: User = JSON.parse(
       await this.reportService.getWinLose(startDate, endDate, 'admin'),
     );
 
-    const supers = admin.children.filter((child: User) => {
-      const isSuperUser = superUserName.includes(child.full_name);
-      // console.log(`Child: ${child.full_name}, Is SuperUser: ${isSuperUser}`);
-      return isSuperUser;
-    });
+    const masters = admin.children
+      .filter((child) => superUserName.includes(child.full_name))
+      .flatMap((sup) => sup.children) // Triển khai con trực tiếp
+      .filter((master) => master.profit !== 0 || master.outstanding !== 0)
+      .sort((a, b) => b.profit - a.profit); // Sắp xếp giảm dần theo lợi nhuận
 
-    let masters: User[] = [];
-
-    // console.log(supers);
-
-    supers.forEach((sup: User) => {
-      masters = masters.concat(sup.children);
-    });
-
-    // console.log(masters);
-
-    masters = masters.filter(
-      (master) => master.profit !== 0 || master.outstanding !== 0,
-    );
-    masters.sort((a, b) => (a.profit > b.profit ? -1 : 1));
     return JSON.stringify(masters);
   }
 
@@ -113,28 +92,15 @@ export class SuperService implements OnModuleInit {
       superUserName = [superUserName];
     }
 
-    const admin = JSON.parse(
+    const admin: User = JSON.parse(
       await this.reportService.getWinLose(startDate, endDate, 'admin'),
     );
 
-    const supers = admin.children.filter((child: User) => {
-      const isSuperUser = superUserName.includes(child.full_name);
-      // console.log(`Child: ${child.full_name}, Is SuperUser: ${isSuperUser}`);
-      return isSuperUser;
-    });
-
-    let agents: User[] = [];
-
-    supers.forEach((sup: User) => {
-      sup.children.forEach((master: User) => {
-        agents = agents.concat(master.children);
-      });
-    });
-
-    agents = agents.filter(
-      (agent) => agent.profit !== 0 || agent.outstanding !== 0,
-    );
-    agents.sort((a, b) => (a.profit > b.profit ? -1 : 1));
+    const agents = admin.children
+      .filter((child) => superUserName.includes(child.full_name))
+      .flatMap((sup) => sup.children.flatMap((master) => master.children)) // Triển khai hai cấp con
+      .filter((agent) => agent.profit !== 0 || agent.outstanding !== 0)
+      .sort((a, b) => b.profit - a.profit); // Sắp xếp giảm dần theo lợi nhuận
     return JSON.stringify(agents);
   }
 
@@ -147,30 +113,19 @@ export class SuperService implements OnModuleInit {
       superUserName = [superUserName];
     }
 
-    const admin = JSON.parse(
+    const admin: User = JSON.parse(
       await this.reportService.getWinLose(startDate, endDate, 'admin'),
     );
 
-    const supers = admin.children.filter((child: User) => {
-      const isSuperUser = superUserName.includes(child.full_name);
-      // console.log(`Child: ${child.full_name}, Is SuperUser: ${isSuperUser}`);
-      return isSuperUser;
-    });
-
-    let members: User[] = [];
-
-    supers.forEach((sup: User) => {
-      sup.children.forEach((master: User) => {
-        master.children.forEach((agent: User) => {
-          members = members.concat(agent.children);
-        });
-      });
-    });
-
-    members = members.filter(
-      (member) => member.profit !== 0 || member.outstanding !== 0,
-    );
-    members.sort((a, b) => (a.profit > b.profit ? -1 : 1));
+    const members = admin.children
+      .filter((child) => superUserName.includes(child.full_name))
+      .flatMap((sup) =>
+        sup.children.flatMap((master) =>
+          master.children.flatMap((agent) => agent.children),
+        ),
+      ) // Triển khai ba cấp con
+      .filter((member) => member.profit !== 0 || member.outstanding !== 0)
+      .sort((a, b) => b.profit - a.profit); // Sắp xếp giảm dần theo lợi nhuận
     return JSON.stringify(members);
   }
 
@@ -185,30 +140,23 @@ export class SuperService implements OnModuleInit {
 
     this.checkUserValid(user, superUserName);
 
-    if (user.level === 5) {
-      let betData = await this.reportService.getBetData(
-        endDate,
-        endDate,
-        'betSlip',
-        user.uuid,
-      );
-
-      betData = betData.filter((item) => user.uuid === item.user_uuid);
-
-      // console.log(betData);
-
-      betData.sort((a, b) => {
-        if (a.bet_type !== b.bet_type) {
-          return a.bet_type - b.bet_type; // Compare by property1 first
-        } else {
-          return b.point - a.point;
-        }
-      });
-
-      user['data'] = betData;
-    } else {
-      user['data'] = [];
-    }
+    user['data'] =
+      user.level === 5
+        ? (
+            await this.reportService.getBetData(
+              endDate,
+              endDate,
+              'betSlip',
+              user.uuid,
+            )
+          )
+            .filter((item) => user.uuid === item.user_uuid)
+            .sort((a, b) =>
+              a.bet_type !== b.bet_type
+                ? a.bet_type - b.bet_type
+                : b.point - a.point,
+            )
+        : [];
 
     user.parent = {};
 

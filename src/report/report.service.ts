@@ -29,17 +29,17 @@ export class ReportService implements OnModuleInit {
   sendMessage = async (message: string) => {
     console.log(message);
 
-    // const url = `https://api.telegram.org/bot${
-    //   this.token
-    // }/sendMessage?chat_id=${this.chatId}&text=${encodeURIComponent(message)}`;
+    const url = `https://api.telegram.org/bot${
+      this.token
+    }/sendMessage?chat_id=${this.chatId}&text=${encodeURIComponent(message)}`;
 
-    // try {
-    //   const response = await fetch(url, { method: 'GET' });
-    //   const data = await response.json();
-    //   console.log('Message sent: ', data);
-    // } catch (error) {
-    //   console.error('Error sending message: ', error);
-    // }
+    try {
+      const response = await fetch(url, { method: 'GET' });
+      const data = await response.json();
+      console.log('Message sent: ', data);
+    } catch (error) {
+      console.error('Error sending message: ', error);
+    }
   };
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
