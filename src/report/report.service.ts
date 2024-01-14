@@ -27,18 +27,19 @@ export class ReportService implements OnModuleInit {
   }
 
   sendMessage = async (message: string) => {
-    // console.log(message);
-    const url = `https://api.telegram.org/bot${
-      this.token
-    }/sendMessage?chat_id=${this.chatId}&text=${encodeURIComponent(message)}`;
+    console.log(message);
 
-    try {
-      const response = await fetch(url, { method: 'GET' });
-      const data = await response.json();
-      console.log('Message sent: ', data);
-    } catch (error) {
-      console.error('Error sending message: ', error);
-    }
+    // const url = `https://api.telegram.org/bot${
+    //   this.token
+    // }/sendMessage?chat_id=${this.chatId}&text=${encodeURIComponent(message)}`;
+
+    // try {
+    //   const response = await fetch(url, { method: 'GET' });
+    //   const data = await response.json();
+    //   console.log('Message sent: ', data);
+    // } catch (error) {
+    //   console.error('Error sending message: ', error);
+    // }
   };
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -79,7 +80,7 @@ export class ReportService implements OnModuleInit {
 
       const date = new Date();
 
-      const weekInfo = this.getInfoFromDate(date);
+      const weekInfo = this.getWeekOfDate(date);
 
       console.log(JSON.stringify(weekInfo));
 
@@ -203,7 +204,7 @@ export class ReportService implements OnModuleInit {
 
     // return listUsers;
 
-    if (betFullData && listUsers) {
+    if (betFullData.length > 0 && listUsers && listUsers.length > 0) {
       const uniqueDates: string[] = Array.from(
         new Set(
           betFullData
@@ -742,11 +743,9 @@ export class ReportService implements OnModuleInit {
       await this.getWinLose(startDate, endDate, 'admin'),
     );
 
-    let superAdmin: User[] = admin.children;
-    superAdmin = superAdmin.filter(
-      (sup) => sup.profit !== 0 || sup.outstanding !== 0,
-    );
-    superAdmin.sort((a, b) => (a.profit > b.profit ? -1 : 1));
+    const superAdmin = admin.children
+      .filter((sup: User) => sup.profit !== 0 || sup.outstanding !== 0)
+      .sort((a: User, b: User) => b.profit - a.profit);
 
     return JSON.stringify(superAdmin);
   }
@@ -756,19 +755,10 @@ export class ReportService implements OnModuleInit {
       await this.getWinLose(startDate, endDate, 'admin'),
     );
 
-    const supers = admin.children;
-    let masters: User[] = [];
-
-    // console.log(masters);
-
-    supers.forEach((sup: User) => {
-      masters = masters.concat(sup.children);
-    });
-
-    masters = masters.filter(
-      (master) => master.profit !== 0 || master.outstanding !== 0,
-    );
-    masters.sort((a, b) => (a.profit > b.profit ? -1 : 1));
+    const masters = admin.children
+      .flatMap((sup: User) => sup.children)
+      .filter((master: User) => master.profit !== 0 || master.outstanding !== 0)
+      .sort((a: User, b: User) => b.profit - a.profit);
     return JSON.stringify(masters);
   }
 
@@ -777,17 +767,10 @@ export class ReportService implements OnModuleInit {
       await this.getWinLose(startDate, endDate, 'admin'),
     );
 
-    let agents: User[] = [];
-
-    admin.children.forEach((sup: User) => {
-      sup.children.forEach((master: User) => {
-        agents = agents.concat(master.children);
-      });
-    });
-    agents = agents.filter(
-      (agent) => agent.profit !== 0 || agent.outstanding !== 0,
-    );
-    agents.sort((a, b) => (a.profit > b.profit ? -1 : 1));
+    const agents = admin.children
+      .flatMap((sup: User) => sup.children.flatMap((master) => master.children))
+      .filter((agent: User) => agent.profit !== 0 || agent.outstanding !== 0)
+      .sort((a: User, b: User) => b.profit - a.profit);
     return JSON.stringify(agents);
   }
 
@@ -1210,7 +1193,9 @@ export class ReportService implements OnModuleInit {
   ) {
     const date = new Date(this.createDateFromDateString(uniqueDates[0]));
 
-    const weekInfo = this.getInfoFromDate(date);
+    console.log('After parse:', date);
+
+    const weekInfo = this.getWeekOfDate(date);
 
     console.log(JSON.stringify(weekInfo));
 
@@ -1517,7 +1502,7 @@ export class ReportService implements OnModuleInit {
   }
 
   private createDateFromDateString(dateString: string) {
-    console.log(dateString);
+    console.log('Before parse:', dateString);
 
     const parts = dateString.split('-');
     if (parts.length !== 3) {
@@ -1525,14 +1510,21 @@ export class ReportService implements OnModuleInit {
     }
 
     const year = parseInt(parts[0]);
-    const month = parseInt(parts[1]) - 1; // Months are 0-based, so subtract 1
+    const month = parseInt(parts[1]) - 1;
     const day = parseInt(parts[2]);
 
     if (isNaN(year) || isNaN(month) || isNaN(day)) {
       throw new Error("Invalid date format. Use 'yyyy-mm-dd'.");
     }
 
-    return new Date(year, month, day);
+    // Create a date in UTC that corresponds to midnight in Bangkok
+    const bangkokOffset = 7; // Bangkok is UTC+7
+    const date = new Date(Date.UTC(year, month, day));
+
+    // Adjust the time to Bangkok's timezone
+    date.setHours(date.getHours() + bangkokOffset);
+
+    return date;
   }
 
   private getInfoFromDate(date: Date) {
@@ -1563,9 +1555,16 @@ export class ReportService implements OnModuleInit {
   }
 
   private getWeekNumberForDate(date: Date): number {
-    const startDate = new Date(date.getFullYear(), 0, 1);
-    const days = Math.floor((date.getTime() - startDate.getTime()) / 86400000);
-    const weekNumber = Math.ceil((days + startDate.getDay() + 1) / 7);
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const days = Math.floor(
+      (date.getTime() - firstDayOfYear.getTime()) / 86400000,
+    );
+
+    // Adjust for the first day of the year being Monday
+    const adjustment =
+      firstDayOfYear.getDay() === 0 ? 6 : firstDayOfYear.getDay() - 1;
+    const weekNumber = Math.ceil((days + adjustment) / 7);
+
     return weekNumber;
   }
 
@@ -1574,25 +1573,18 @@ export class ReportService implements OnModuleInit {
       throw new Error('Invalid week number. Week should be between 1 and 53.');
     }
 
-    const january4th = new Date(year, 0, 4); // January is month 0
-    const daysToFirstThursday = 4 - january4th.getDay();
-    january4th.setDate(january4th.getDate() + daysToFirstThursday);
+    // 1. Calculate the Thursday of the desired week (ISO 8601):
+    const thursday = new Date(year, 0, 1 + (weekNumber - 1) * 7 - 3); // Adjust for Thursday
 
-    const startDate = new Date(january4th);
-    startDate.setDate(startDate.getDate() + (weekNumber - 1) * 7);
+    // 2. Determine the start of the week based on the desired starting day:
+    const startDate = new Date(thursday);
+    startDate.setDate(startDate.getDate() - 4); // Shift to Monday (ISO 8601)
 
+    // 3. Set the end of the week:
     const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 0);
+    endDate.setDate(endDate.getDate() + 6);
 
-    // Ensure the start date is a Monday (1) and the end date is a Sunday (0).
-    while (startDate.getDay() !== 1) {
-      startDate.setDate(startDate.getDate() - 1);
-    }
-
-    while (endDate.getDay() !== 0) {
-      endDate.setDate(endDate.getDate() + 1);
-    }
-
+    // 4. Format the dates:
     const formatDate = (date) => {
       const day = date.getDate().toString().padStart(2, '0');
       const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -1605,5 +1597,40 @@ export class ReportService implements OnModuleInit {
       startDate: formatDate(startDate),
       endDate: formatDate(endDate),
     };
+  }
+
+  private getWeekOfDate(date: Date) {
+    // Lấy ngày đầu tiên của tuần
+    const firstDayOfWeek = this.getMonday(date)[0];
+    const sundayOfWeek = this.getMonday(date)[6];
+
+    // Lấy số tuần của ngày đó
+    const weekOfYear =
+      Math.floor(
+        (new Date(firstDayOfWeek).getTime() -
+          new Date(date.getFullYear(), 0, 1).getTime()) /
+          (1000 * 60 * 60 * 24) /
+          7,
+      ) + 1;
+
+    return {
+      weekNumberInYear: weekOfYear,
+      startDate: firstDayOfWeek,
+      sundayOfWeek: sundayOfWeek,
+      year: date.getFullYear(),
+    };
+  }
+
+  private getMonday(inputDate) {
+    const d = new Date(inputDate);
+    const out = [];
+
+    // set to "Sunday" for the previous week
+    d.setDate(d.getDate() - (d.getDay() || 7)); // if getDay is 0 (Sunday), take 7 days
+    for (let i = 0; i < 7; i++) {
+      // note, the value of i is unused
+      out.push(new Date(d.setDate(d.getDate() + 1)).toISOString().slice(0, 10)); // increment by one day
+    }
+    return out;
   }
 }
