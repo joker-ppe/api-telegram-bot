@@ -96,7 +96,7 @@ export class ReportService implements OnModuleInit {
 
       console.log('################################');
 
-      // await this.getAdminInfo(currentDateString);
+      await this.getAdminInfo(currentDateString);
     } finally {
       this.isRunningCron = false;
       console.log('===========>         Done cron job');
