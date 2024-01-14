@@ -110,9 +110,11 @@ export class ReportService implements OnModuleInit {
     // Lấy số mũ chính xác
     const decimalPlaces = Math.pow(10, digits - 1);
     const divisor = Math.pow(10, decimalPlaces);
-    return Math.floor(num / divisor) * divisor;
+    const isNegative = num < 0;
+    return isNegative
+      ? Math.floor(num / divisor) * divisor * 10
+      : Math.floor(num / divisor) * divisor;
   }
-
 
   async getAdminInfo(endDate: string) {
     const admin = JSON.parse(await this.getWinLose(endDate, endDate, 'admin'));
