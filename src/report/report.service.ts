@@ -88,11 +88,24 @@ export class ReportService implements OnModuleInit {
 
       const date = new Date(this.createDateFromDateString(currentDateString));
 
-      const weekInfo = this.getWeekOfDate(date);
+      ////////////////////////////////////////////////////////////////
+      console.log('Sync data last week to this week');
 
-      console.log(JSON.stringify(weekInfo));
+      const lastWeekInfo = this.getWeekOfDate(this.getDateLastWeek(date));
 
-      await this.getWinLoseCron(weekInfo.startDate, currentDateString);
+      console.log(JSON.stringify(lastWeekInfo));
+
+      await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
+
+      console.log('################################');
+      ////////////////////////////////////////////////////////////////
+      // console.log('Sync data this week');
+
+      // const weekInfo = this.getWeekOfDate(date);
+
+      // console.log(JSON.stringify(weekInfo));
+
+      // await this.getWinLoseCron(weekInfo.startDate, currentDateString);
 
       console.log('################################');
 
@@ -101,6 +114,12 @@ export class ReportService implements OnModuleInit {
       this.isRunningCron = false;
       console.log('===========>         Done cron job');
     }
+  }
+
+  private getDateLastWeek(inputDate: Date) {
+    const date = new Date(inputDate);
+    date.setDate(date.getDate() - 7);
+    return date;
   }
 
   ////////////////////////////////////////////////////////////////
@@ -1612,6 +1631,7 @@ export class ReportService implements OnModuleInit {
       ) + 1;
 
     return {
+      date: date,
       weekNumberInYear: weekOfYear,
       startDate: firstDayOfWeek,
       sundayOfWeek: sundayOfWeek,
