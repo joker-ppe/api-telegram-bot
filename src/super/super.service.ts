@@ -105,6 +105,7 @@ export class SuperService implements OnModuleInit {
 
     const masters = mastersFromSuper
       .concat(singleMasters)
+      .filter((child) => child)
       .sort((a, b) => b.profit - a.profit);
 
     return JSON.stringify(masters);
@@ -148,6 +149,7 @@ export class SuperService implements OnModuleInit {
 
     const agents = mastersFromSuper
       .concat(singleMasters)
+      .filter((child) => child)
       .flatMap((master) => master.children)
       .filter((agent) => agent.profit !== 0 || agent.outstanding !== 0)
       .sort((a, b) => b.profit - a.profit);
@@ -191,6 +193,7 @@ export class SuperService implements OnModuleInit {
 
     const members = mastersFromSuper
       .concat(singleMasters)
+      .filter((child) => child)
       .flatMap((master) => master.children.flatMap((agent) => agent.children))
       .filter((member) => member.profit !== 0 || member.outstanding !== 0)
       .sort((a, b) => b.profit - a.profit);
