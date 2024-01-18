@@ -1038,7 +1038,7 @@ export class ReportService implements OnModuleInit {
 
       const results = await Promise.all(
         Array.from({ length: totalPage }, (_, i) =>
-          this.fetchBetDataPage(i + 1, fromDate, toDate, type, userUuid),
+          this.fetchWithRetry(3, i + 1, fromDate, toDate, type, userUuid),
         ),
       );
 
@@ -1085,7 +1085,8 @@ export class ReportService implements OnModuleInit {
         // lấy thêm data
         const results = await Promise.all(
           Array.from({ length: totalPage - lastTotalPage + 1 }, (_, i) =>
-            this.fetchBetDataPage(
+            this.fetchWithRetry(
+              3, // max tries to fetch
               i + 1, // lấy data từ page cũ
               // i + 1,
               fromDate,
@@ -1199,8 +1200,36 @@ export class ReportService implements OnModuleInit {
       .then((data) => data.data)
       .catch((error) => {
         console.error(`Error loading data for page ${page}:`, error);
-        return []; // Trả về mảng rỗng nếu có lỗi
+        throw new Error(`Failed to fetch page ${page}`);
+        // return []; // Trả về mảng rỗng nếu có lỗi
       });
+  }
+
+  private async fetchWithRetry(
+    maxRetries: number,
+    page: number,
+    fromDate: string,
+    toDate: string,
+    type: string,
+    userUuid: string,
+  ) {
+    let retries = 0;
+    while (retries < maxRetries) {
+      try {
+        return await this.fetchBetDataPage(
+          page,
+          fromDate,
+          toDate,
+          type,
+          userUuid,
+        );
+      } catch (error) {
+        console.error(`Retry ${retries + 1} for page ${page}:`, error);
+        retries++;
+        // Optionally, you can add a delay here before retrying
+      }
+    }
+    return [];
   }
 
   private async parseData(

@@ -45,6 +45,7 @@ export class SuperController {
   @Get('masters')
   async GetMasters(
     @Query('super') superUserName: string[],
+    @Query('master') masterUserName: string[],
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Res() response: Response,
@@ -54,18 +55,25 @@ export class SuperController {
     console.log('request: ', {
       api: 'super/masters',
       super: superUserName,
+      master: masterUserName,
       startDate: startDate,
       endDate: endDate,
     });
 
     return response.send(
-      await this.superService.getMasters(superUserName, startDate, endDate),
+      await this.superService.getMasters(
+        superUserName,
+        masterUserName,
+        startDate,
+        endDate,
+      ),
     );
   }
 
   @Get('agents')
   async GetAgents(
     @Query('super') superUserName: string[],
+    @Query('master') masterUserName: string[],
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Res() response: Response,
@@ -75,18 +83,25 @@ export class SuperController {
     console.log('request: ', {
       api: 'super/agents',
       super: superUserName,
+      master: masterUserName,
       startDate: startDate,
       endDate: endDate,
     });
 
     return response.send(
-      await this.superService.getAgents(superUserName, startDate, endDate),
+      await this.superService.getAgents(
+        superUserName,
+        masterUserName,
+        startDate,
+        endDate,
+      ),
     );
   }
 
   @Get('members')
   async GetMembers(
     @Query('super') superUserName: string[],
+    @Query('master') masterUserName: string[],
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Res() response: Response,
@@ -96,18 +111,25 @@ export class SuperController {
     console.log('request: ', {
       api: 'super/members',
       super: superUserName,
+      master: masterUserName,
       startDate: startDate,
       endDate: endDate,
     });
 
     return response.send(
-      await this.superService.getMembers(superUserName, startDate, endDate),
+      await this.superService.getMembers(
+        superUserName,
+        masterUserName,
+        startDate,
+        endDate,
+      ),
     );
   }
 
   @Get('user')
   async GetUser(
     @Query('super') superUserName: string[],
+    @Query('master') masterUserName: string[],
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Query('yesterday') yesterday: string,
@@ -119,6 +141,7 @@ export class SuperController {
     console.log('request: ', {
       api: 'super/user',
       super: superUserName,
+      master: masterUserName,
       startDate: startDate,
       endDate: endDate,
       yesterday: yesterday,
@@ -128,6 +151,7 @@ export class SuperController {
     return response.send(
       await this.superService.getUser(
         superUserName,
+        masterUserName,
         startDate,
         endDate,
         yesterday,
@@ -139,6 +163,7 @@ export class SuperController {
   @Get('user/os_bet')
   async GetUserOsBet(
     @Query('super') superUserName: string[],
+    @Query('master') masterUserName: string[],
     @Query('endDate') endDate: string,
     @Query('userName') userName: string,
     @Res() response: Response,
@@ -148,12 +173,18 @@ export class SuperController {
     console.log('request: ', {
       api: 'super/user/os_bet',
       super: superUserName,
+      master: masterUserName,
       endDate: endDate,
       userName: userName,
     });
 
     return response.send(
-      await this.superService.getUserOsBet(superUserName, endDate, userName),
+      await this.superService.getUserOsBet(
+        superUserName,
+        masterUserName,
+        endDate,
+        userName,
+      ),
     );
   }
 }
