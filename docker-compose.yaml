@@ -117,7 +117,7 @@ services:
     # build: ./nginx
     image: nginx:latest
     ports:
-      - 6868:6868
+      - 80:80
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
     container_name: jk-nginx
