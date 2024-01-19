@@ -110,8 +110,8 @@ services:
     image: nginx:latest
     ports:
       - 80:80
-    # volumes:
-    #   - ./nginx.conf:/etc/nginx/nginx.conf
+    volumes:
+      - jk_data:/etc/nginx/nginx.conf
     container_name: jk-nginx
     depends_on:
       - jk-api-cron
