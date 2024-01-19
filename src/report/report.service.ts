@@ -49,7 +49,13 @@ export class ReportService implements OnModuleInit {
 
   @Cron(CronExpression.EVERY_30_SECONDS, { name: 'fetchAndStoreBets' }) // Đặt tần suất cập nhật theo nhu cầu
   async handleCron() {
-    await this.fetchAndStoreBets();
+    if (process.env.INSTANCE_ROLE === 'cron') {
+      // Chạy cron job
+      console.log('I am a Cron job instance');
+      await this.fetchAndStoreBets();
+    } else {
+      console.log('Not a Cron job instance');
+    }
   }
 
   async fetchAndStoreBets() {
@@ -120,6 +126,20 @@ export class ReportService implements OnModuleInit {
     const date = new Date(inputDate);
     date.setDate(date.getDate() - 7);
     return date;
+  }
+
+  async getReportDate(endDate: string) {
+    const dataDate = await this.prismaService.data.findUnique({
+      where: {
+        date: endDate,
+      },
+    });
+
+    if (!dataDate) {
+      return [];
+    } else {
+      return dataDate.data;
+    }
   }
 
   ////////////////////////////////////////////////////////////////

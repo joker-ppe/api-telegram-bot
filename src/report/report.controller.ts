@@ -175,12 +175,18 @@ export class ReportController {
     );
   }
 
-  // @Get('numbers')
-  // async GetReportNumber(
-  //   @Query('endDate') endDate: string,
-  //   @Res() response: Response,
-  // ) {
-  //   response.setHeader('Content-Type', 'application/json');
-  //   return response.send(await this.reportService.getReportNumber(endDate));
-  // }
+  @Get('date')
+  async GetReportNumber(
+    @Query('endDate') endDate: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'report/date',
+      endDate: endDate,
+    });
+
+    return response.send(await this.reportService.getReportDate(endDate));
+  }
 }

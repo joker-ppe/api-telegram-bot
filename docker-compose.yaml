@@ -19,10 +19,28 @@ services:
       retries: 5
     networks:
       - jk-nestjs-network
+
+  jk-api-cron:
+    build: .
+    container_name: jk-api-cron
+    environment:
+      - INSTANCE_ROLE=cron
+      - APP_PORT=3003
+    ports:
+      - 3003:3003
+    depends_on:
+      jk-database:
+        condition: service_healthy
+    networks:
+      - jk-nestjs-network
+
   jk-api:
     # image: voixmomotalk/nestjs-thesis-api:1.0.0
     build: .
     container_name: jk-api
+    environment:
+      - INSTANCE_ROLE=api
+      - APP_PORT=3004
     ports:
       - 3004:3004
     depends_on:
@@ -30,6 +48,80 @@ services:
         condition: service_healthy
     networks:
       - jk-nestjs-network
+
+  jk-api-2:
+    build: .
+    container_name: jk-api-2
+    environment:
+      - INSTANCE_ROLE=api
+      - APP_PORT=3005
+    ports:
+      - 3005:3005
+    depends_on:
+      jk-database:
+        condition: service_healthy
+    networks:
+      - jk-nestjs-network
+
+  jk-api-3:
+    build: .
+    container_name: jk-api-3
+    environment:
+      - INSTANCE_ROLE=api
+      - APP_PORT=3006
+    ports:
+      - 3006:3006
+    depends_on:
+      jk-database:
+        condition: service_healthy
+    networks:
+      - jk-nestjs-network
+
+  jk-api-4:
+    build: .
+    container_name: jk-api-4
+    environment:
+      - INSTANCE_ROLE=api
+      - APP_PORT=3007
+    ports:
+      - 3007:3007
+    depends_on:
+      jk-database:
+        condition: service_healthy
+    networks:
+      - jk-nestjs-network
+
+  jk-api-5:
+    build: .
+    container_name: jk-api-5
+    environment:
+      - INSTANCE_ROLE=api
+      - APP_PORT=3008
+    ports:
+      - 3008:3008
+    depends_on:
+      jk-database:
+        condition: service_healthy
+    networks:
+      - jk-nestjs-network
+
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - 80:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - jk-api-cron
+      - jk-api
+      - jk-api-2
+      - jk-api-3
+      - jk-api-4
+      - jk-api-5
+    networks:
+      - jk-nestjs-network
+
 networks:
   jk-nestjs-network:
     driver: bridge

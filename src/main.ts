@@ -44,7 +44,7 @@ export class IpWhitelistMiddleware implements NestMiddleware {
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   // Setup IP Whitelist Middleware
-  app.use(new IpWhitelistMiddleware().use.bind(new IpWhitelistMiddleware()));
+  // app.use(new IpWhitelistMiddleware().use.bind(new IpWhitelistMiddleware()));
   // add middleware HERE!
   app.useGlobalPipes(new ValidationPipe());
 
@@ -80,6 +80,7 @@ async function bootstrap() {
 
   SwaggerModule.setup('docs', app, document);
 
-  await app.listen(3004);
+  const port = process.env.APP_PORT || 3004;
+  await app.listen(port);
 }
 bootstrap();
