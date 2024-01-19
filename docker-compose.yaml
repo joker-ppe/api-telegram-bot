@@ -114,11 +114,12 @@ services:
 
 
   nginx:
-    build: ./nginx
+    # build: ./nginx
+    image: nginx:latest
     ports:
       - 80:80
-    # volumes:
-    #   - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       # - /var/jenkins_home/workspace/auto-api-telegram-bot/nginx.conf:/etc/nginx/nginx.conf
     container_name: jk-nginx
     depends_on:
