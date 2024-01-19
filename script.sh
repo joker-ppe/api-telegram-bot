@@ -18,6 +18,7 @@ sudo ufw allow 3007
 sudo ufw allow 3008
 
 sudo ufw allow 8080
+sudo ufw allow 6868
 
 sudo ufw allow ssh
 

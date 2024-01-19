@@ -113,24 +113,24 @@ services:
       - jk-nestjs-network
 
 
-  nginx:
-    # build: ./nginx
-    image: nginx:latest
-    ports:
-      - 6868:6868
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      # - /var/jenkins_home/workspace/auto-api-telegram-bot/nginx.conf:/etc/nginx/nginx.conf
-    container_name: jk-nginx
-    depends_on:
-      - jk-api-cron
-      - jk-api
-      - jk-api-2
-      - jk-api-3
-      - jk-api-4
-      - jk-api-5
-    networks:
-      - jk-nestjs-network
+  # nginx:
+  #   # build: ./nginx
+  #   image: nginx:latest
+  #   ports:
+  #     - 6868:6868
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+  #     # - /var/jenkins_home/workspace/auto-api-telegram-bot/nginx.conf:/etc/nginx/nginx.conf
+  #   container_name: jk-nginx
+  #   depends_on:
+  #     - jk-api-cron
+  #     - jk-api
+  #     - jk-api-2
+  #     - jk-api-3
+  #     - jk-api-4
+  #     - jk-api-5
+  #   networks:
+  #     - jk-nestjs-network
 
 networks:
   jk-nestjs-network:
