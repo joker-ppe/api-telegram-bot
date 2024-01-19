@@ -10,7 +10,12 @@ sudo ufw allow 443
 
 sudo ufw allow 5432
 
+sudo ufw allow 3003
 sudo ufw allow 3004
+sudo ufw allow 3005
+sudo ufw allow 3006
+sudo ufw allow 3007
+sudo ufw allow 3008
 
 sudo ufw allow 8080
 

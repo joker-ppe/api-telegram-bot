@@ -3,6 +3,7 @@ version: '3.9'
 services:
   jk-database:
     image: postgres:16.0
+    restart: always
     volumes:
       - jk_data:/var/lib/postgresql/data
     container_name: jk-database
@@ -23,6 +24,7 @@ services:
   jk-api-cron:
     build: .
     container_name: jk-api-cron
+    restart: always
     environment:
       - INSTANCE_ROLE=cron
       - APP_PORT=3003
@@ -38,6 +40,7 @@ services:
     # image: voixmomotalk/nestjs-thesis-api:1.0.0
     build: .
     container_name: jk-api
+    restart: always
     environment:
       - INSTANCE_ROLE=api
       - APP_PORT=3004
@@ -52,6 +55,7 @@ services:
   jk-api-2:
     build: .
     container_name: jk-api-2
+    restart: always
     environment:
       - INSTANCE_ROLE=api
       - APP_PORT=3005
@@ -66,6 +70,7 @@ services:
   jk-api-3:
     build: .
     container_name: jk-api-3
+    restart: always
     environment:
       - INSTANCE_ROLE=api
       - APP_PORT=3006
@@ -80,6 +85,7 @@ services:
   jk-api-4:
     build: .
     container_name: jk-api-4
+    restart: always
     environment:
       - INSTANCE_ROLE=api
       - APP_PORT=3007
@@ -94,6 +100,7 @@ services:
   jk-api-5:
     build: .
     container_name: jk-api-5
+    restart: always
     environment:
       - INSTANCE_ROLE=api
       - APP_PORT=3008
@@ -107,11 +114,11 @@ services:
 
 
   nginx:
-    image: nginx:latest
+    build: ./nginx
     ports:
       - 80:80
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    # volumes:
+    #   - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       # - /var/jenkins_home/workspace/auto-api-telegram-bot/nginx.conf:/etc/nginx/nginx.conf
     container_name: jk-nginx
     depends_on:
