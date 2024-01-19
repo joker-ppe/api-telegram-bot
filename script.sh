@@ -45,9 +45,9 @@ sudo chmod 666 /var/run/docker.sock
 docker-compose --version
 
 # build docker-compose
-sudo docker stop $(docker ps -a -q)
-sudo docker rm $(docker ps -a -q)
-sudo docker rmi -f $(docker images -aq)
+sudo docker stop $(sudo docker ps -a -q)
+sudo docker rm $(sudo docker ps -a -q)
+sudo docker rmi -f $(sudo docker images -aq)
 sudo docker-compose up -d
 
 sudo docker run -u 0 --privileged --name jenkins -p 8080:8080 -p 50000:50000 -v /var/run/docker.sock:/var/run/docker.sock -v $(which docker):/usr/bin/docker -v $(which docker-compose):/usr/bin/docker-compose -v jenkins_home:/var/jenkins_home jenkins/jenkins:lts-jdk17
