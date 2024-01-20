@@ -8,26 +8,26 @@ import { Response } from 'express';
 export class ReportController {
   constructor(private reportService: ReportService) {}
 
-  @Get()
-  async GetWinLose(
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-    @Query('userName') userName: string,
-    @Res() response: Response,
-  ) {
-    response.setHeader('Content-Type', 'application/json');
+  // @Get()
+  // async GetWinLose(
+  //   @Query('startDate') startDate: string,
+  //   @Query('endDate') endDate: string,
+  //   @Query('userName') userName: string,
+  //   @Res() response: Response,
+  // ) {
+  //   response.setHeader('Content-Type', 'application/json');
 
-    console.log('request: ', {
-      api: 'report/GetWinLose',
-      startDate: startDate,
-      endDate: endDate,
-      userName: userName,
-    });
+  //   console.log('request: ', {
+  //     api: 'report/GetWinLose',
+  //     startDate: startDate,
+  //     endDate: endDate,
+  //     userName: userName,
+  //   });
 
-    return response.send(
-      await this.reportService.getWinLose(startDate, endDate, userName),
-    );
-  }
+  //   return response.send(
+  //     await this.reportService.getWinLose(startDate, endDate, userName),
+  //   );
+  // }
 
   @Get('bidOutside')
   async GetBidOutSide(

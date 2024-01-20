@@ -51,10 +51,10 @@ export class ReportService implements OnModuleInit {
   async handleCron() {
     if (process.env.INSTANCE_ROLE === 'cron') {
       // Chạy cron job
-      console.log('I am a Cron job instance');
+      // console.log('I am a Cron job instance');
       await this.fetchAndStoreBets();
     } else {
-      console.log('Not a Cron job instance');
+      // console.log('Not a Cron job instance');
     }
   }
 
@@ -69,28 +69,7 @@ export class ReportService implements OnModuleInit {
     this.isRunningCron = true;
 
     try {
-      const currentDate = new Date();
-      const formatter = new Intl.DateTimeFormat('en-US', {
-        timeZone: 'Asia/Bangkok',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      });
-      const formattedDate = formatter.format(currentDate);
-
-      console.log(`Fetching at ${formattedDate}`);
-
-      const parts = formatter.formatToParts(currentDate);
-
-      const year = parts.find((part) => part.type === 'year').value;
-      const month = parts.find((part) => part.type === 'month').value;
-      const day = parts.find((part) => part.type === 'day').value;
-
-      const currentDateString = `${year}-${month}-${day}`;
+      const currentDateString = this.getCurrentDateString();
 
       const date = new Date(this.createDateFromDateString(currentDateString));
 
@@ -101,9 +80,6 @@ export class ReportService implements OnModuleInit {
 
       console.log(JSON.stringify(lastWeekInfo));
 
-      await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
-
-      console.log('################################');
       ////////////////////////////////////////////////////////////////
       // console.log('Sync data this week');
 
@@ -112,6 +88,8 @@ export class ReportService implements OnModuleInit {
       // console.log(JSON.stringify(weekInfo));
 
       // await this.getWinLoseCron(weekInfo.startDate, currentDateString);
+
+      await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
 
       console.log('################################');
 
@@ -193,32 +171,11 @@ export class ReportService implements OnModuleInit {
     });
   }
 
-  async getWinLose(startDate: string, endDate: string, userName: string) {
+  async getListUsersWithDataCron(startDate: string, endDate: string) {
     const uniqueDatesSearch = this.generateDateRange(startDate, endDate);
     console.log(uniqueDatesSearch);
 
-    const currentDate = new Date();
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: 'Asia/Bangkok',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    });
-    const formattedDate = formatter.format(currentDate);
-
-    // const parts = formatter.formatToParts(currentDate);
-
-    // const year = parts.find((part) => part.type === 'year').value;
-    // const month = parts.find((part) => part.type === 'month').value;
-    // const day = parts.find((part) => part.type === 'day').value;
-    // const hour = parts.find((part) => part.type === 'hour').value;
-    // const minute = parts.find((part) => part.type === 'minute').value;
-
-    console.log(`Current date: ${formattedDate}`);
+    console.log(`Current date: ${this.getCurrentDateString()}`);
 
     // const currentDateString = `${year}-${month}-${day}`;
 
@@ -260,167 +217,222 @@ export class ReportService implements OnModuleInit {
 
       //   let user: User = null;
       //   return listAdmins;
-      // console.log('listAdmins: ' + listAdmins);
+      // console.log('listAdmins: ' + JSON.stringify(listAdmins));
+      return {
+        listAdmins: listAdmins,
+        betFullData: betFullData,
+      };
+    } else {
+      console.log('Not found data source');
+      return {
+        listAdmins: [],
+        betFullData: [],
+      };
+    }
+  }
 
-      const user: User = this.findUser(listAdmins, userName);
-      if (user) {
-        // user.children.length = 0;
+  async getWinLose(startDate: string, endDate: string, userName: string) {
+    const uniqueDatesSearch = this.generateDateRange(startDate, endDate);
+    console.log(uniqueDatesSearch);
 
-        let line = 'admin';
-        let title = 'Admin';
+    const date = new Date(
+      this.createDateFromDateString(this.getCurrentDateString()),
+    );
 
-        const listChildren = [];
+    const weekInfo = this.getWeekOfDate(date);
 
-        let userData = betFullData;
-        const listUserUuid = [];
+    let listAdmins: User[] = [];
+    let betFullData: BetItem[] = [];
 
-        if (user.level === 5) {
-          title = 'Hội Viên';
-          const master = await this.getUserData(user.parent_uuid);
-          const superAdmin = await this.getUserData(master.parent_uuid);
-          line = `${superAdmin.parent.full_name}<br/>${master.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
-          listUserUuid.push(user.uuid);
-        } else if (user.level === 4) {
-          title = 'Đại Lý';
-          const superAdmin = await this.getUserData(user.parent_uuid);
-          line = `${superAdmin.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
+    if (startDate === endDate) {
+      console.log('Case 1: today');
 
-          user.children.forEach((member) => {
-            listChildren.push({
-              full_name: member.full_name,
-              outstanding: member.outstanding,
-              profit: member.profit,
-            });
+      const dateData = await this.prismaService.data.findUnique({
+        where: {
+          date: endDate,
+        },
+      });
+      if (dateData) {
+        listAdmins = JSON.parse(dateData.adminDataToDay).listAdmins;
+        betFullData = JSON.parse(dateData.adminDataToDay).betFullData;
+      }
+    } else if (startDate === weekInfo.startDate && startDate !== endDate) {
+      console.log('Case 2: this week');
+
+      const dateData = await this.prismaService.data.findUnique({
+        where: {
+          date: endDate,
+        },
+      });
+      if (dateData) {
+        listAdmins = JSON.parse(dateData.adminDataThisWeek).listAdmins;
+        betFullData = JSON.parse(dateData.adminDataThisWeek).betFullData;
+      }
+    } else {
+      console.log('Case 3: random days');
+
+      for (let i = 0; i < uniqueDatesSearch.length; i++) {
+        const date = uniqueDatesSearch[i];
+        const dataDate = await this.prismaService.data.findUnique({
+          where: {
+            date: date,
+          },
+        });
+
+        // Thêm dữ liệu vào mảng betFullData
+        if (dataDate && dataDate.data) {
+          betFullData = betFullData.concat(JSON.parse(dataDate.data));
+        }
+      }
+
+      const listUsers: User[] = await this.getListUsers();
+
+      if (betFullData.length > 0 && listUsers && listUsers.length > 0) {
+        const uniqueDates: string[] = Array.from(
+          new Set(
+            betFullData
+              .filter((record: BetItem) => record != null)
+              .filter((record: BetItem) => record.term != null)
+              .map((record: BetItem) => record.term),
+          ),
+        );
+        uniqueDates.sort((a, b) => a.localeCompare(b));
+
+        listAdmins = await this.parseData(listUsers, betFullData, uniqueDates);
+
+        //   let user: User = null;
+        //   return listAdmins;
+        // console.log('listAdmins: ' + JSON.stringify(listAdmins));
+      } else {
+        console.log('Not found data source');
+      }
+    }
+
+    if (!listAdmins) {
+      listAdmins = [];
+    }
+    if (!betFullData) {
+      betFullData = [];
+    }
+
+    const user: User = this.findUser(listAdmins, userName);
+    if (user) {
+      // user.children.length = 0;
+
+      let line = 'admin';
+      let title = 'Admin';
+
+      const listChildren = [];
+
+      let userData = betFullData;
+      const listUserUuid = [];
+
+      if (user.level === 5) {
+        title = 'Hội Viên';
+        const master = this.findUser(listAdmins, user.parent_uuid);
+        const superAdmin = this.findUser(listAdmins, master.parent_uuid);
+        line = `${superAdmin.parent.full_name}<br/>${master.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
+        listUserUuid.push(user.uuid);
+      } else if (user.level === 4) {
+        title = 'Đại Lý';
+        const superAdmin = this.findUser(listAdmins, user.parent_uuid);
+        line = `${superAdmin.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
+
+        user.children.forEach((member) => {
+          listChildren.push({
+            full_name: member.full_name,
+            outstanding: member.outstanding,
+            profit: member.profit,
+          });
+          listUserUuid.push(member.uuid);
+        });
+      } else if (user.level === 3) {
+        title = 'Tổng Đại Lý';
+        line = `${user.parent.full_name}<br/>${user.full_name}`;
+
+        user.children.forEach((agent) => {
+          listChildren.push({
+            full_name: agent.full_name,
+            outstanding: agent.outstanding,
+            profit: agent.profit,
+          });
+          agent.children.forEach((member) => {
             listUserUuid.push(member.uuid);
           });
-        } else if (user.level === 3) {
-          title = 'Tổng Đại Lý';
-          line = `${user.parent.full_name}<br/>${user.full_name}`;
-
-          user.children.forEach((agent) => {
-            listChildren.push({
-              full_name: agent.full_name,
-              outstanding: agent.outstanding,
-              profit: agent.profit,
-            });
+        });
+      } else if (user.level === 2) {
+        title = 'Cổ Đông';
+        line = user.full_name;
+        user.children.forEach((master) => {
+          listChildren.push({
+            full_name: master.full_name,
+            outstanding: master.outstanding,
+            profit: master.profit,
+          });
+          master.children.forEach((agent) => {
             agent.children.forEach((member) => {
               listUserUuid.push(member.uuid);
             });
           });
-        } else if (user.level === 2) {
-          title = 'Cổ Đông';
-          line = user.full_name;
-          user.children.forEach((master) => {
-            listChildren.push({
-              full_name: master.full_name,
-              outstanding: master.outstanding,
-              profit: master.profit,
-            });
-            master.children.forEach((agent) => {
-              agent.children.forEach((member) => {
-                listUserUuid.push(member.uuid);
-              });
-            });
-          });
-        }
-
-        if (user.level != 1) {
-          userData = betFullData.filter((betSlip) =>
-            listUserUuid.includes(betSlip.user_uuid),
-          );
-        }
-
-        userData = userData.filter((betSlip) => betSlip.term === endDate);
-
-        const categorizedList = userData.reduce((acc, item) => {
-          // Create a key for each combination of bet_type and number
-          const key = `${item.bet_type}`;
-          if (!acc[key]) {
-            acc[key] = [];
-          }
-          acc[key].push(item);
-          return acc;
-        }, {});
-
-        const summarizeNumbersByBetType = (data) => {
-          const summary = {};
-
-          for (const betType in data) {
-            // summary[betType] = [];
-
-            // data[betType].forEach((bet) => {
-            //   summary[betType].push({
-            //     number: bet.number,
-            //     point: bet.point,
-            //     price: bet.price,
-            //     amount: bet.amount,
-            //   });
-            // });
-
-            // // Sắp xếp mảng theo point
-            // summary[betType].sort((a, b) => b.point - a.point);
-
-            let point = 0;
-            let amount = 0;
-
-            data[betType].forEach((bet) => {
-              point += bet.point;
-              amount += bet.amount;
-            });
-
-            summary[betType] = {
-              point: point,
-              amount: amount,
-            };
-          }
-
-          return summary;
-        };
-
-        const summarizedNumbers = summarizeNumbersByBetType(categorizedList);
-        // console.log(categorizedList);
-
-        user['line'] = line;
-        user['title'] = title;
-        user['list_children'] = listChildren;
-        user['data_bet'] = summarizedNumbers;
-
-        // console.log(user['data']);
-
-        return JSON.stringify(user);
+        });
       }
 
-      console.log('Not found');
-      throw new NotFoundException('Not found');
-    } else {
-      console.log('Not found data source');
-      throw new NotFoundException('Not found data source');
+      if (user.level != 1) {
+        userData = betFullData.filter((betSlip) =>
+          listUserUuid.includes(betSlip.user_uuid),
+        );
+      }
+
+      userData = userData.filter((betSlip) => betSlip.term === endDate);
+
+      const categorizedList = userData.reduce((acc, item) => {
+        // Create a key for each combination of bet_type and number
+        const key = `${item.bet_type}`;
+        if (!acc[key]) {
+          acc[key] = [];
+        }
+        acc[key].push(item);
+        return acc;
+      }, {});
+
+      const summarizeNumbersByBetType = (data) => {
+        const summary = {};
+
+        for (const betType in data) {
+          let point = 0;
+          let amount = 0;
+
+          data[betType].forEach((bet) => {
+            point += bet.point;
+            amount += bet.amount;
+          });
+
+          summary[betType] = {
+            point: point,
+            amount: amount,
+          };
+        }
+
+        return summary;
+      };
+
+      const summarizedNumbers = summarizeNumbersByBetType(categorizedList);
+      // console.log(categorizedList);
+
+      user['line'] = line;
+      user['title'] = title;
+      user['list_children'] = listChildren;
+      user['data_bet'] = summarizedNumbers;
+
+      // console.log(user['data']);
+
+      return JSON.stringify(user);
     }
+    throw new NotFoundException();
   }
 
   async getWinLoseCron(startDate: string, endDate: string) {
-    const currentDate = new Date();
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: 'Asia/Bangkok',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false,
-    });
-    const formattedDate = formatter.format(currentDate);
-
-    // const parts = formatter.formatToParts(currentDate);
-
-    // const year = parts.find((part) => part.type === 'year').value;
-    // const month = parts.find((part) => part.type === 'month').value;
-    // const day = parts.find((part) => part.type === 'day').value;
-    // const hour = parts.find((part) => part.type === 'hour').value;
-    // const minute = parts.find((part) => part.type === 'minute').value;
-
-    console.log(`Current date: ${formattedDate}`);
+    console.log(`Current date: ${this.getCurrentDateString()}`);
 
     // const currentDateString = `${year}-${month}-${day}`;
 
@@ -448,7 +460,8 @@ export class ReportService implements OnModuleInit {
           lastTotalPage: 1,
           lastTotalRow: 0,
           data: null,
-
+          adminDataToDay: null,
+          adminDataThisWeek: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         };
@@ -524,6 +537,9 @@ export class ReportService implements OnModuleInit {
             `Updated new data: total page now = ${dataDate.lastTotalPage}, total row now = ${dataDate.lastTotalRow}`,
           );
 
+          // update admin data
+          await this.updateAdminData(date);
+
           // await this.sendMessage(
           //   `Sync at: ${formattedDate}\n${date} => New record: ${newData.length} - Total record now: ${dataDate.lastTotalRow}`,
           // );
@@ -551,6 +567,8 @@ export class ReportService implements OnModuleInit {
             lastTotalPage: 1,
             lastTotalRow: 0,
             data: null,
+            adminDataToDay: null,
+            adminDataThisWeek: null,
             createdAt: new Date(),
             updatedAt: new Date(),
           };
@@ -570,7 +588,7 @@ export class ReportService implements OnModuleInit {
               console.log('==> Have results from server.........');
 
               await this.sendMessage(
-                `Sync at: ${formattedDate}\n${date} ==> Have results from server.........'`,
+                `Sync at: ${this.getCurrentDateTimeString()}\n${date} ==> Have results from server.........'`,
               );
 
               if (currentDataDate.data) {
@@ -586,178 +604,57 @@ export class ReportService implements OnModuleInit {
               }
             } else {
               console.log('==> Do not have results from server.........');
+
+              console.log('==> Check admin data...');
+              // check admin data
+              if (!currentDataDate.adminDataToDay) {
+                await this.updateAdminData(date);
+              } else {
+                console.log('==> No need update admin data...');
+              }
             }
           } else {
             console.log('==> No need update status record');
+
+            console.log('==> Check admin data...');
+            // check admin data
+            if (!currentDataDate.adminDataToDay) {
+              await this.updateAdminData(date);
+            } else {
+              console.log('==> No need update admin data...');
+            }
           }
         }
       }
-
-      // Thêm dữ liệu vào mảng betFullData
-      // if (dataDate.data) {
-      //   betFullData = betFullData.concat(JSON.parse(dataDate.data));
-      // }
     }
+  }
 
-    // const listUsers: User[] = await this.getListUsers();
+  async updateAdminData(endDate: string) {
+    const date = new Date(this.createDateFromDateString(endDate));
 
-    // return listUsers;
+    const weekInfo = this.getWeekOfDate(date);
+    const startDate = weekInfo.startDate;
 
-    // if (betFullData && listUsers) {
-    //   const uniqueDates: string[] = Array.from(
-    //     new Set(
-    //       betFullData
-    //         .filter((record: BetItem) => record != null)
-    //         .filter((record: BetItem) => record.term != null)
-    //         .map((record: BetItem) => record.term),
-    //     ),
-    //   );
-    //   uniqueDates.sort((a, b) => a.localeCompare(b));
+    console.log(`\n\nUpdating admin data: ${startDate} -> ${endDate}`);
 
-    //   const listAdmins: User[] = await this.parseData(
-    //     listUsers,
-    //     betFullData,
-    //     uniqueDates,
-    //   );
+    const dataToDay = await this.getListUsersWithDataCron(endDate, endDate);
 
-    //   //   let user: User = null;
-    //   //   return listAdmins;
-    //   // console.log('listAdmins: ' + listAdmins);
+    const dataThisWeek = await this.getListUsersWithDataCron(
+      startDate,
+      endDate,
+    );
 
-    //   const user: User = this.findUser(listAdmins, userName);
-    //   if (user) {
-    //     // user.children.length = 0;
+    await this.prismaService.data.update({
+      where: {
+        date: endDate,
+      },
+      data: {
+        adminDataToDay: JSON.stringify(dataToDay),
+        adminDataThisWeek: JSON.stringify(dataThisWeek),
+      },
+    });
 
-    //     let line = 'admin';
-    //     let title = 'Admin';
-
-    //     const listChildren = [];
-
-    //     let userData = betFullData;
-    //     const listUserUuid = [];
-
-    //     if (user.level === 5) {
-    //       title = 'Hội Viên';
-    //       const master = await this.getUserData(user.parent_uuid);
-    //       const superAdmin = await this.getUserData(master.parent_uuid);
-    //       line = `${superAdmin.parent.full_name}<br/>${master.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
-    //       listUserUuid.push(user.uuid);
-    //     } else if (user.level === 4) {
-    //       title = 'Đại Lý';
-    //       const superAdmin = await this.getUserData(user.parent_uuid);
-    //       line = `${superAdmin.parent.full_name}<br/>${user.parent.full_name}<br/>${user.full_name}`;
-
-    //       user.children.forEach((member) => {
-    //         listChildren.push({
-    //           full_name: member.full_name,
-    //           outstanding: member.outstanding,
-    //           profit: member.profit,
-    //         });
-    //         listUserUuid.push(member.uuid);
-    //       });
-    //     } else if (user.level === 3) {
-    //       title = 'Tổng Đại Lý';
-    //       line = `${user.parent.full_name}<br/>${user.full_name}`;
-
-    //       user.children.forEach((agent) => {
-    //         listChildren.push({
-    //           full_name: agent.full_name,
-    //           outstanding: agent.outstanding,
-    //           profit: agent.profit,
-    //         });
-    //         agent.children.forEach((member) => {
-    //           listUserUuid.push(member.uuid);
-    //         });
-    //       });
-    //     } else if (user.level === 2) {
-    //       title = 'Cổ Đông';
-    //       line = user.full_name;
-    //       user.children.forEach((master) => {
-    //         listChildren.push({
-    //           full_name: master.full_name,
-    //           outstanding: master.outstanding,
-    //           profit: master.profit,
-    //         });
-    //         master.children.forEach((agent) => {
-    //           agent.children.forEach((member) => {
-    //             listUserUuid.push(member.uuid);
-    //           });
-    //         });
-    //       });
-    //     }
-
-    //     if (user.level != 1) {
-    //       userData = betFullData.filter((betSlip) =>
-    //         listUserUuid.includes(betSlip.user_uuid),
-    //       );
-    //     }
-
-    //     userData = userData.filter((betSlip) => betSlip.term === endDate);
-
-    //     const categorizedList = userData.reduce((acc, item) => {
-    //       // Create a key for each combination of bet_type and number
-    //       const key = `${item.bet_type}`;
-    //       if (!acc[key]) {
-    //         acc[key] = [];
-    //       }
-    //       acc[key].push(item);
-    //       return acc;
-    //     }, {});
-
-    //     const summarizeNumbersByBetType = (data) => {
-    //       const summary = {};
-
-    //       for (const betType in data) {
-    //         // summary[betType] = [];
-
-    //         // data[betType].forEach((bet) => {
-    //         //   summary[betType].push({
-    //         //     number: bet.number,
-    //         //     point: bet.point,
-    //         //     price: bet.price,
-    //         //     amount: bet.amount,
-    //         //   });
-    //         // });
-
-    //         // // Sắp xếp mảng theo point
-    //         // summary[betType].sort((a, b) => b.point - a.point);
-
-    //         let point = 0;
-    //         let amount = 0;
-
-    //         data[betType].forEach((bet) => {
-    //           point += bet.point;
-    //           amount += bet.amount;
-    //         });
-
-    //         summary[betType] = {
-    //           point: point,
-    //           amount: amount,
-    //         };
-    //       }
-
-    //       return summary;
-    //     };
-
-    //     const summarizedNumbers = summarizeNumbersByBetType(categorizedList);
-    //     // console.log(categorizedList);
-
-    //     user['line'] = line;
-    //     user['title'] = title;
-    //     user['list_children'] = listChildren;
-    //     user['data_bet'] = summarizedNumbers;
-
-    //     // console.log(user['data']);
-
-    //     return JSON.stringify(user);
-    //   }
-
-    //   console.log('Not found');
-    //   throw new NotFoundException('Not found');
-    // } else {
-    //   console.log('Not found data source');
-    //   throw new NotFoundException('Not found data source');
-    // }
+    console.log(`Completed update admin data: ${startDate} -> ${endDate}`);
   }
 
   async getTotalOutsideBid(startDate: string, endDate: string) {
@@ -902,47 +799,61 @@ export class ReportService implements OnModuleInit {
   }
 
   ////////////////////////////////////////////////////////////////
-  private async getUserData(uuid: string) {
-    const url = `${this.baseUrl}/partner/user/index?api_key=${this.apiKey}&uuid=${uuid}&type=1`;
+  // private async getUserData(uuid: string) {
+  //   const url = `${this.baseUrl}/partner/user/index?api_key=${this.apiKey}&uuid=${uuid}&type=1`;
 
-    // console.log(url);
+  //   // console.log(url);
 
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-      // console.log(data);
-      return data.data[0];
-    } catch (error) {
-      console.error('Error loading data:', error);
-      return null; // return null or handle error as needed
-    } finally {
-    }
-  }
+  //   try {
+  //     const response = await fetch(url);
+  //     const data = await response.json();
+  //     // console.log(data);
+  //     return data.data[0];
+  //   } catch (error) {
+  //     console.error('Error loading data:', error);
+  //     return null; // return null or handle error as needed
+  //   } finally {
+  //   }
+  // }
 
   private findUser(listAdmins: User[], userName: string): User | undefined {
     for (const admin of listAdmins) {
-      if (admin.username === userName || admin.full_name === userName) {
+      if (
+        admin.username === userName ||
+        admin.full_name === userName ||
+        admin.uuid === userName
+      ) {
         return admin;
       }
       for (const superAdmin of admin.children) {
         if (
           superAdmin.username === userName ||
-          superAdmin.full_name === userName
+          superAdmin.full_name === userName ||
+          superAdmin.uuid === userName
         ) {
           return superAdmin;
         }
         for (const master of superAdmin.children) {
-          if (master.username === userName || master.full_name === userName) {
+          if (
+            master.username === userName ||
+            master.full_name === userName ||
+            master.uuid === userName
+          ) {
             return master;
           }
           for (const agent of master.children) {
-            if (agent.username === userName || agent.full_name === userName) {
+            if (
+              agent.username === userName ||
+              agent.full_name === userName ||
+              agent.uuid === userName
+            ) {
               return agent;
             }
             for (const member of agent.children) {
               if (
                 member.username === userName ||
-                member.full_name === userName
+                member.full_name === userName ||
+                member.uuid === userName
               ) {
                 return member;
               }
@@ -1064,7 +975,7 @@ export class ReportService implements OnModuleInit {
 
       const betData = results.flat(); // Kết hợp tất cả kết quả vào một mảng duy nhất
 
-      console.log('bet data', betData);
+      // console.log('bet data', betData);
 
       if (betData.length === rowCount) {
         return betData;
@@ -1699,5 +1610,49 @@ export class ReportService implements OnModuleInit {
       out.push(new Date(d.setDate(d.getDate() + 1)).toISOString().slice(0, 10)); // increment by one day
     }
     return out;
+  }
+
+  private getCurrentDateString(): string {
+    const currentDate = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Bangkok',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+    const formattedDate = formatter.format(currentDate);
+
+    console.log(`Fetching at ${formattedDate}`);
+
+    const parts = formatter.formatToParts(currentDate);
+
+    const year = parts.find((part) => part.type === 'year').value;
+    const month = parts.find((part) => part.type === 'month').value;
+    const day = parts.find((part) => part.type === 'day').value;
+
+    const currentDateString = `${year}-${month}-${day}`;
+
+    return currentDateString;
+  }
+
+  private getCurrentDateTimeString(): string {
+    const currentDate = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Bangkok',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+    const formattedDate = formatter.format(currentDate);
+
+    return formattedDate;
   }
 }
