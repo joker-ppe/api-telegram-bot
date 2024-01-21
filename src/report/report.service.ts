@@ -237,11 +237,10 @@ export class ReportService implements OnModuleInit {
     const uniqueDatesSearch = this.generateDateRange(startDate, endDate);
     console.log(uniqueDatesSearch);
 
-    const date = new Date(
-      this.createDateFromDateString(this.getCurrentDateString()),
-    );
+    const date = new Date(this.createDateFromDateString(startDate));
 
     const weekInfo = this.getWeekOfDate(date);
+    // console.log(weekInfo);
 
     let listAdmins: User[] = [];
     let betFullData: BetItem[] = [];
