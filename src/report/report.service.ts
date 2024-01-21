@@ -49,6 +49,7 @@ export class ReportService implements OnModuleInit {
 
   @Cron(CronExpression.EVERY_30_SECONDS, { name: 'fetchAndStoreBets' }) // Đặt tần suất cập nhật theo nhu cầu
   async handleCron() {
+    // await this.fetchAndStoreBets();
     if (process.env.INSTANCE_ROLE === 'cron') {
       // Chạy cron job
       // console.log('I am a Cron job instance');
@@ -134,6 +135,7 @@ export class ReportService implements OnModuleInit {
 
     if (!oldOutstanding) {
       oldOutstanding = 0;
+      this.outstandingData.set(endDate, 0);
     }
 
     if (currentOutstanding > 0) {
