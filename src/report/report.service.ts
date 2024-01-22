@@ -766,6 +766,20 @@ export class ReportService implements OnModuleInit {
     return JSON.stringify(user);
   }
 
+  async getUserLastWeek(userName: string) {
+    const currentDateString = this.getCurrentDateString();
+
+    const date = new Date(this.createDateFromDateString(currentDateString));
+    const lastWeekInfo = this.getWeekOfDate(this.getDateLastWeek(date));
+
+    return this.getUser(
+      lastWeekInfo.startDate,
+      lastWeekInfo.sundayOfWeek,
+      lastWeekInfo.saturdayOfWeek,
+      userName,
+    );
+  }
+
   async getUserOsBet(endDate: string, userName: string) {
     const user = JSON.parse(await this.getWinLose(endDate, endDate, userName));
 
@@ -1584,6 +1598,7 @@ export class ReportService implements OnModuleInit {
     // Lấy ngày đầu tiên của tuần
     const firstDayOfWeek = this.getMonday(date)[0];
     const sundayOfWeek = this.getMonday(date)[6];
+    const saturdayOfWeek = this.getMonday(date)[5];
 
     // Lấy số tuần của ngày đó
     const weekOfYear =
@@ -1599,6 +1614,7 @@ export class ReportService implements OnModuleInit {
       weekNumberInYear: weekOfYear,
       startDate: firstDayOfWeek,
       sundayOfWeek: sundayOfWeek,
+      saturdayOfWeek: saturdayOfWeek,
       year: date.getFullYear(),
     };
   }

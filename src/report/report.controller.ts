@@ -147,6 +147,21 @@ export class ReportController {
     );
   }
 
+  @Get('userLastWeek')
+  async GetUserLastWeek(
+    @Query('userName') userName: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'report/userLastWeek',
+      userName: userName,
+    });
+
+    return response.send(await this.reportService.getUserLastWeek(userName));
+  }
+
   @Get('user/send_message_from_bot')
   async GetUserOsNumber(
     @Query('message') message: string,
