@@ -204,4 +204,23 @@ export class ReportController {
 
     return response.send(await this.reportService.getReportDate(endDate));
   }
+
+  @Get('nickName')
+  async GetReportNickName(
+    @Query('endDate') endDate: string,
+    @Query('nickName') nickName: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'report/nickName',
+      endDate: endDate,
+      nickName: nickName,
+    });
+
+    return response.send(
+      await this.reportService.getReportNickName(endDate, nickName),
+    );
+  }
 }

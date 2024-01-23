@@ -121,6 +121,77 @@ export class ReportService implements OnModuleInit {
     }
   }
 
+  async getReportNickName(endDate: string, nickName: string) {
+    const date = new Date(this.createDateFromDateString(endDate));
+
+    console.log('After parse:', date);
+
+    const weekInfo = this.getWeekOfDate(date);
+
+    console.log(JSON.stringify(weekInfo));
+
+    const dataFilePath = `https://raw.githubusercontent.com/joker-ppe/commission/main/config-super/config-week-${weekInfo.weekNumberInYear}-${weekInfo.year}.json`;
+
+    try {
+      const response = await fetch(dataFilePath);
+      const listSupersInfo = await response.json();
+
+      const superInfo = listSupersInfo.find(
+        (superInfo: any) => superInfo.nickName === nickName,
+      );
+
+      if (superInfo) {
+        console.log({ superInfo });
+
+        const listSupers = superInfo.super.toString().split(';');
+        const listMasters = superInfo.master.toString().split(';');
+
+        console.log({ listSupers });
+        console.log({ listMasters });
+
+        let listMastersData = [];
+
+        for (let i = 0; i < listSupers.length; i++) {
+          const superAdmin = JSON.parse(
+            await this.getWinLose(
+              weekInfo.startDate,
+              endDate,
+              listSupers[i].trim(),
+            ),
+          );
+          listMastersData = listMastersData.concat(superAdmin.children);
+        }
+
+        for (let i = 0; i < listMasters.length; i++) {
+          const tmpMaster = this.findUser(listMastersData, listMasters[i]);
+          if (tmpMaster) {
+            listMastersData.push(tmpMaster);
+          } else {
+            const master = JSON.parse(
+              await this.getWinLose(
+                weekInfo.startDate,
+                endDate,
+                listMasters[i].trim(),
+              ),
+            );
+            listMastersData.push(master);
+          }
+        }
+
+        return JSON.stringify(listMastersData);
+      } else {
+        throw new NotFoundException('Not found');
+      }
+    } catch (error) {
+      console.error(error);
+      console.error(
+        `Chưa có cấu hình báo cáo tuần này: ${weekInfo.weekNumberInYear}-${weekInfo.year}`,
+      );
+
+      throw new NotFoundException(error);
+    }
+  }
+
   ////////////////////////////////////////////////////////////////
 
   private roundDownToNearestTenPower(num: number): number {
@@ -246,7 +317,7 @@ export class ReportService implements OnModuleInit {
     let betFullData: BetItem[] = [];
 
     if (startDate === endDate) {
-      console.log('Case 1: today');
+      console.log('Case 1: today ->', userName);
 
       const dateData = await this.prismaService.data.findUnique({
         where: {
@@ -258,7 +329,7 @@ export class ReportService implements OnModuleInit {
         betFullData = JSON.parse(dateData.adminDataToDay).betFullData;
       }
     } else if (startDate === weekInfo.startDate && startDate !== endDate) {
-      console.log('Case 2: this week');
+      console.log('Case 2: this week ->', userName);
 
       const dateData = await this.prismaService.data.findUnique({
         where: {
