@@ -141,13 +141,13 @@ export class ReportService implements OnModuleInit {
       );
 
       if (superInfo) {
-        console.log({ superInfo });
+        // console.log({ superInfo });
 
         const listSupers = superInfo.super.toString().split(';');
         const listMasters = superInfo.master.toString().split(';');
 
-        console.log({ listSupers });
-        console.log({ listMasters });
+        // console.log({ listSupers });
+        // console.log({ listMasters });
 
         let listMastersData = [];
 
@@ -163,10 +163,10 @@ export class ReportService implements OnModuleInit {
         }
 
         for (let i = 0; i < listMasters.length; i++) {
-          const tmpMaster = this.findUser(listMastersData, listMasters[i]);
-          if (tmpMaster) {
-            listMastersData.push(tmpMaster);
-          } else {
+          const tmpMaster = listMastersData.filter(
+            (master) => master.full_name === listMasters[i],
+          );
+          if (!tmpMaster) {
             const master = JSON.parse(
               await this.getWinLose(
                 weekInfo.startDate,
@@ -178,7 +178,9 @@ export class ReportService implements OnModuleInit {
           }
         }
 
-        return JSON.stringify(listMastersData);
+        superInfo['listMasters'] = listMastersData;
+
+        return JSON.stringify(superInfo);
       } else {
         throw new NotFoundException('Not found');
       }
