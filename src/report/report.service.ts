@@ -95,9 +95,43 @@ export class ReportService implements OnModuleInit {
       console.log('################################');
 
       await this.getAdminInfo(currentDateString);
+
+      await this.deleteOldData();
     } finally {
       this.isRunningCron = false;
-      console.log('===========>         Done cron job');
+      console.log(
+        '===========>         Done cron job\n================================',
+      );
+    }
+  }
+
+  private async deleteOldData() {
+    const date = new Date();
+    date.setDate(date.getDate() - 14);
+
+    const weekInfo = this.getWeekOfDate(date);
+    const uniqueDatesSearch = this.generateDateRange(
+      weekInfo.startDate,
+      weekInfo.sundayOfWeek,
+    );
+
+    for (let i = 0; i < uniqueDatesSearch.length; i++) {
+      const dateStr = uniqueDatesSearch[i];
+
+      const data = await this.prismaService.data.findUnique({
+        where: {
+          date: dateStr,
+        },
+      });
+
+      if (data) {
+        console.log(`Find data at ${dateStr}. Deleting...`);
+        return await this.prismaService.data.delete({
+          where: {
+            date: dateStr,
+          },
+        });
+      }
     }
   }
 
