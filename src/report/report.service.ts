@@ -170,7 +170,7 @@ export class ReportService implements OnModuleInit {
           const tmpMaster = listMastersData.filter(
             (master) => master.full_name === listMasters[i],
           );
-          if (!tmpMaster) {
+          if (tmpMaster.length === 0) {
             const master = JSON.parse(
               await this.getWinLose(
                 weekInfo.startDate,
@@ -510,7 +510,7 @@ export class ReportService implements OnModuleInit {
 
       return JSON.stringify(user);
     }
-    throw new NotFoundException();
+    return null;
   }
 
   async getWinLoseCron(startDate: string, endDate: string) {
