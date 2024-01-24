@@ -156,7 +156,7 @@ export class ReportService implements OnModuleInit {
           const superAdmin = JSON.parse(
             await this.getWinLose(
               weekInfo.startDate,
-              endDate,
+              weekInfo.sundayOfWeek,
               listSupers[i].trim(),
             ),
           );
@@ -174,7 +174,7 @@ export class ReportService implements OnModuleInit {
             const master = JSON.parse(
               await this.getWinLose(
                 weekInfo.startDate,
-                endDate,
+                weekInfo.sundayOfWeek,
                 listMasters[i].trim(),
               ),
             );
