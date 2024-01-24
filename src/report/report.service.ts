@@ -813,6 +813,27 @@ export class ReportService implements OnModuleInit {
     return JSON.stringify(members);
   }
 
+  async getMembersInactive(startDate: string, endDate: string) {
+    const admin = JSON.parse(
+      await this.getWinLose(startDate, endDate, 'admin'),
+    );
+
+    let members: User[] = [];
+
+    admin.children.forEach((sup: User) => {
+      sup.children.forEach((master: User) => {
+        master.children.forEach((agent: User) => {
+          members = members.concat(agent.children);
+        });
+      });
+    });
+    members = members.filter(
+      (member) => member.profit === 0 && member.outstanding === 0,
+    );
+    members.sort((a, b) => (a.profit > b.profit ? -1 : 1));
+    return JSON.stringify(members);
+  }
+
   async getUser(
     startDate: string,
     endDate: string,

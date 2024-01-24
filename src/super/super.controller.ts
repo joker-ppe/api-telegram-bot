@@ -126,6 +126,34 @@ export class SuperController {
     );
   }
 
+  @Get('membersInactive')
+  async GetMembersInactive(
+    @Query('super') superUserName: string[],
+    @Query('master') masterUserName: string[],
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'super/membersInactive',
+      super: superUserName,
+      master: masterUserName,
+      startDate: startDate,
+      endDate: endDate,
+    });
+
+    return response.send(
+      await this.superService.GetMembersInactive(
+        superUserName,
+        masterUserName,
+        startDate,
+        endDate,
+      ),
+    );
+  }
+
   @Get('user')
   async GetUser(
     @Query('super') superUserName: string[],

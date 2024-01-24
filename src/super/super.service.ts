@@ -212,6 +212,62 @@ export class SuperService implements OnModuleInit {
     // return JSON.stringify(members);
   }
 
+  async GetMembersInactive(
+    superUserName: string[],
+    masterUserName: string[],
+    startDate: string,
+    endDate: string,
+  ) {
+    if (typeof superUserName === 'string') {
+      superUserName = [superUserName];
+    }
+
+    if (typeof masterUserName === 'string') {
+      masterUserName = [masterUserName];
+    }
+    masterUserName = masterUserName.filter((userName) => userName !== '');
+
+    const admin: User = JSON.parse(
+      await this.reportService.getWinLose(startDate, endDate, 'admin'),
+    );
+
+    // master ở cây super lớn
+    const mastersFromSuper = admin.children
+      .filter((child) => superUserName.includes(child.full_name))
+      .flatMap((sup) => sup.children); // Triển khai con trực tiếp
+    // .filter((master) => master.profit !== 0 || master.outstanding !== 0);
+    // .sort((a, b) => b.profit - a.profit); // Sắp xếp giảm dần theo lợi nhuận
+
+    let singleMasters: User[];
+
+    if (masterUserName.length > 0) {
+      singleMasters = admin.children
+        .flatMap((sup) => sup.children) // Triển khai con trực tiếp
+        .filter((master) => masterUserName.includes(master.full_name)); // thêm filter master
+      // .filter((master) => master.profit !== 0 || master.outstanding !== 0);
+    }
+
+    const members = mastersFromSuper
+      .concat(singleMasters)
+      .filter((child) => child)
+      .flatMap((master) => master.children.flatMap((agent) => agent.children))
+      .filter((member) => member.profit === 0 && member.outstanding === 0)
+      .sort((a, b) => b.profit - a.profit);
+
+    return JSON.stringify(members);
+
+    // const members = admin.children
+    //   .filter((child) => superUserName.includes(child.full_name))
+    //   .flatMap((sup) =>
+    //     sup.children.flatMap((master) =>
+    //       master.children.flatMap((agent) => agent.children),
+    //     ),
+    //   ) // Triển khai ba cấp con
+    //   .filter((member) => member.profit !== 0 || member.outstanding !== 0)
+    //   .sort((a, b) => b.profit - a.profit); // Sắp xếp giảm dần theo lợi nhuận
+    // return JSON.stringify(members);
+  }
+
   async getUserOsBet(
     superUserName: string[],
     masterUserName: string[],
