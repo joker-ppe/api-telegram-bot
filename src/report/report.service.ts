@@ -182,8 +182,10 @@ export class ReportService implements OnModuleInit {
           }
         }
 
-        superInfo['listMasters'] = listMastersData;
-        superInfo['listSupers'] = listSupersData;
+        superInfo['listMasters'] = listMastersData.filter((master) => master);
+        superInfo['listSupers'] = listSupersData.filter(
+          (superAdmin) => superAdmin,
+        );
 
         return JSON.stringify(superInfo);
       } else {
