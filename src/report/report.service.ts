@@ -126,7 +126,7 @@ export class ReportService implements OnModuleInit {
 
       if (data) {
         console.log(`Find data at ${dateStr}. Deleting...`);
-        return await this.prismaService.data.delete({
+        await this.prismaService.data.delete({
           where: {
             date: dateStr,
           },
