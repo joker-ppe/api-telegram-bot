@@ -150,6 +150,7 @@ export class ReportService implements OnModuleInit {
         // console.log({ listMasters });
 
         let listMastersData = [];
+        const listSupersData = [];
 
         for (let i = 0; i < listSupers.length; i++) {
           const superAdmin = JSON.parse(
@@ -159,7 +160,10 @@ export class ReportService implements OnModuleInit {
               listSupers[i].trim(),
             ),
           );
-          listMastersData = listMastersData.concat(superAdmin.children);
+          if (superAdmin) {
+            listSupersData.push(superAdmin);
+            listMastersData = listMastersData.concat(superAdmin.children);
+          }
         }
 
         for (let i = 0; i < listMasters.length; i++) {
@@ -179,6 +183,7 @@ export class ReportService implements OnModuleInit {
         }
 
         superInfo['listMasters'] = listMastersData;
+        superInfo['listSupers'] = listSupersData;
 
         return JSON.stringify(superInfo);
       } else {
@@ -1403,18 +1408,18 @@ export class ReportService implements OnModuleInit {
           if (parent.level === 1) {
             downLineCommission += Math.round(
               ((child.superCommission + child.downLineCommission) *
-                child.bidPercent) /
+                (100 - child.bidPercent)) /
                 100,
             );
           } else if (parent.level === 2) {
             downLineCommission += Math.round(
               ((child.masterCommission + child.downLineCommission) *
-                child.bidPercent) /
+                (100 - child.bidPercent)) /
                 100,
             );
           } else if (parent.level === 3) {
             downLineCommission += Math.round(
-              (child.agentCommission * child.bidPercent) / 100,
+              (child.agentCommission * (100 - child.bidPercent)) / 100,
             );
           }
         }
