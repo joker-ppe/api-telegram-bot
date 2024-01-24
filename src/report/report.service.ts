@@ -149,7 +149,7 @@ export class ReportService implements OnModuleInit {
         // console.log({ listSupers });
         // console.log({ listMasters });
 
-        let listMastersData = [];
+        const listMastersData = [];
         const listSupersData = [];
 
         for (let i = 0; i < listSupers.length; i++) {
@@ -162,7 +162,7 @@ export class ReportService implements OnModuleInit {
           );
           if (superAdmin) {
             listSupersData.push(superAdmin);
-            listMastersData = listMastersData.concat(superAdmin.children);
+            // listMastersData = listMastersData.concat(superAdmin.children);
           }
         }
 
