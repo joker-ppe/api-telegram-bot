@@ -140,6 +140,7 @@ services:
     ports:
       - 9090:9090
     restart: unless-stopped
+    privileged: true
     volumes:
       - ./prometheus:/etc/prometheus
       - jk_data:/prometheus
