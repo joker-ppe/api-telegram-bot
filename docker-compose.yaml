@@ -142,7 +142,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./prometheus:/etc/prometheus
-      - prom_data:/prometheus
+      - jk_data:/prometheus
     networks:
       - jk-nestjs-network
 
