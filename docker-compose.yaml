@@ -167,9 +167,6 @@ services:
     image: nginx/nginx-prometheus-exporter
     container_name: prometheus-nginx-exporter
     restart: always
-    environment:
-      - GF_SECURITY_ADMIN_USER=joker
-      - GF_SECURITY_ADMIN_PASSWORD=Joker@123
     command:
       - -nginx.scrape-uri=http://nginx/stub_status
     expose:
