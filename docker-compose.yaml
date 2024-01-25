@@ -154,8 +154,9 @@ services:
     restart: unless-stopped
     depends_on:
       - prometheus
-    env_file:
-      - .env
+    environment:
+      - GF_SECURITY_ADMIN_USER=joker
+      - GF_SECURITY_ADMIN_PASSWORD=Joker@123
     volumes:
       - ./grafana:/etc/grafana/provisioning/datasources
     networks:
@@ -166,7 +167,9 @@ services:
     image: nginx/nginx-prometheus-exporter
     container_name: prometheus-nginx-exporter
     restart: always
-    env_file: .env
+    environment:
+      - GF_SECURITY_ADMIN_USER=joker
+      - GF_SECURITY_ADMIN_PASSWORD=Joker@123
     command:
       - -nginx.scrape-uri=https://nginx/stub_status
     expose:
