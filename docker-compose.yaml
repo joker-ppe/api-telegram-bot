@@ -132,6 +132,74 @@ services:
     networks:
       - jk-nestjs-network
 
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prom_data:/prometheus
+    networks:
+      - jk-nestjs-network
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    env_file:
+      - .env
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/datasources
+    networks:
+      - jk-nestjs-network
+
+  # source https://github.com/nginxinc/nginx-prometheus-exporter
+  nginx-prometheus-exporter:
+    image: nginx/nginx-prometheus-exporter
+    container_name: prometheus-nginx-exporter
+    restart: always
+    env_file: .env
+    command:
+      - -nginx.scrape-uri=https://nginx/stub_status
+    expose:
+      - 9113
+    networks:
+      - jk-nestjs-network
+    depends_on:
+      - prometheus
+
+  # source https://github.com/prometheus/node_exporter
+  # https://github.com/vegasbrianc/prometheus/
+  prometheus-node-exporter:
+    image: prom/node-exporter
+    container_name: prometheus-node-exporter
+    restart: always
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - --collector.filesystem.ignored-mount-points
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    networks:
+      - jk-nestjs-network
+    privileged: true
+    depends_on:
+      - prometheus
+    expose:
+      - 9100
+
+
 networks:
   jk-nestjs-network:
     driver: bridge
