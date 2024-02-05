@@ -90,13 +90,15 @@ export class ReportService implements OnModuleInit {
 
       // await this.getWinLoseCron(weekInfo.startDate, currentDateString);
 
-      await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
+      // await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
+
+      await this.getWinLoseCron('2023-11-21', currentDateString);
 
       console.log('################################');
 
       await this.getAdminInfo(currentDateString);
 
-      await this.deleteOldData();
+      // await this.deleteOldData();
     } finally {
       this.isRunningCron = false;
       console.log(
