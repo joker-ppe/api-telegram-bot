@@ -84,15 +84,15 @@ export class ReportService implements OnModuleInit {
       ////////////////////////////////////////////////////////////////
       // console.log('Sync data this week');
 
-      // const weekInfo = this.getWeekOfDate(date);
+      const weekInfo = this.getWeekOfDate(date);
 
       // console.log(JSON.stringify(weekInfo));
 
-      // await this.getWinLoseCron(weekInfo.startDate, currentDateString);
+      await this.getWinLoseCron(weekInfo.startDate, currentDateString);
 
       // await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
 
-      await this.getWinLoseCron('2023-11-21', currentDateString);
+      // await this.getWinLoseCron('2023-11-21', currentDateString);
 
       console.log('################################');
 
@@ -224,6 +224,36 @@ export class ReportService implements OnModuleInit {
         );
 
         return JSON.stringify(superInfo);
+      } else {
+        throw new NotFoundException('Not found');
+      }
+    } catch (error) {
+      console.error(error);
+      console.error(
+        `Chưa có cấu hình báo cáo tuần này: ${weekInfo.weekNumberInYear}-${weekInfo.year}`,
+      );
+
+      throw new NotFoundException(error);
+    }
+  }
+
+  async getListReportInfo(endDate: string) {
+    const date = new Date(this.createDateFromDateString(endDate));
+
+    console.log('After parse:', date);
+
+    const weekInfo = this.getWeekOfDate(date);
+
+    console.log(JSON.stringify(weekInfo));
+
+    const dataFilePath = `https://raw.githubusercontent.com/joker-ppe/commission/main/config-super/config-week-${weekInfo.weekNumberInYear}-${weekInfo.year}.json`;
+
+    try {
+      const response = await fetch(dataFilePath);
+      const listSupersInfo = await response.json();
+
+      if (listSupersInfo.length > 0) {
+        return JSON.stringify(listSupersInfo);
       } else {
         throw new NotFoundException('Not found');
       }
