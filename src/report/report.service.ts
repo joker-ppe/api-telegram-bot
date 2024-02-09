@@ -157,7 +157,11 @@ export class ReportService implements OnModuleInit {
     }
   }
 
-  async getReportNickName(endDate: string, nickName: string) {
+  async getReportNickName(
+    endDate: string,
+    nickName: string,
+    isLastWeek: boolean,
+  ) {
     const date = new Date(this.createDateFromDateString(endDate));
 
     console.log('After parse:', date);
@@ -179,94 +183,27 @@ export class ReportService implements OnModuleInit {
       if (superInfo) {
         // console.log({ superInfo });
 
-        const listSupers = superInfo.super.toString().split(';');
-        const listMasters = superInfo.master.toString().split(';');
+        let listSupers = superInfo.super.toString().split(';');
+        let listMasters = superInfo.master.toString().split(';');
 
-        // console.log({ listSupers });
-        // console.log({ listMasters });
-
-        const listMastersData = [];
-        const listSupersData = [];
-
-        for (let i = 0; i < listSupers.length; i++) {
-          const superAdmin = JSON.parse(
-            await this.getWinLose(
-              weekInfo.startDate,
-              weekInfo.sundayOfWeek,
-              listSupers[i].trim(),
-            ),
-          );
-          if (superAdmin) {
-            listSupersData.push(superAdmin);
-            // listMastersData = listMastersData.concat(superAdmin.children);
-          }
-        }
-
-        for (let i = 0; i < listMasters.length; i++) {
-          const tmpMaster = listMastersData.filter(
-            (master) => master.full_name === listMasters[i],
-          );
-          if (tmpMaster.length === 0) {
-            const master = JSON.parse(
-              await this.getWinLose(
-                weekInfo.startDate,
-                weekInfo.sundayOfWeek,
-                listMasters[i].trim(),
-              ),
-            );
-            listMastersData.push(master);
-          }
-        }
-
-        superInfo['listMasters'] = listMastersData.filter((master) => master);
-        superInfo['listSupers'] = listSupersData.filter(
-          (superAdmin) => superAdmin,
+        listSupers = listSupers.filter(
+          (tmp: string, index: number, self: string[]) =>
+            tmp !== '' && self.indexOf(tmp) === index,
         );
-
-        return JSON.stringify(superInfo);
-      } else {
-        throw new NotFoundException('Not found');
-      }
-    } catch (error) {
-      console.error(error);
-      console.error(
-        `Chưa có cấu hình báo cáo tuần này: ${weekInfo.weekNumberInYear}-${weekInfo.year}`,
-      );
-
-      throw new NotFoundException(error);
-    }
-  }
-
-  async getReportNickNameCustom(endDate: string, nickName: string) {
-    const date = new Date(this.createDateFromDateString(endDate));
-
-    console.log('After parse:', date);
-
-    const weekInfo = this.getWeekOfDate(date);
-
-    console.log(JSON.stringify(weekInfo));
-
-    const dataFilePath = `https://raw.githubusercontent.com/joker-ppe/commission/main/config-super/config-week-${weekInfo.weekNumberInYear}-${weekInfo.year}.json`;
-
-    try {
-      const response = await fetch(dataFilePath);
-      const listSupersInfo = await response.json();
-
-      const superInfo = listSupersInfo.find(
-        (superInfo: any) => superInfo.nickName === nickName,
-      );
-
-      if (superInfo) {
-        // console.log({ superInfo });
-
-        const listSupers = superInfo.super.toString().split(';');
-        const listMasters = superInfo.master.toString().split(';');
-
         // console.log({ listSupers });
+        listMasters = listMasters.filter(
+          (master: string, index: number, self: string[]) =>
+            master !== '' && self.indexOf(master) === index,
+        );
         // console.log({ listMasters });
 
         const listMastersData = [];
         const listSupersData = [];
+
+        console.log('isLastWeek:', isLastWeek);
+        if (isLastWeek.toString().toLowerCase() === 'true') {
+          endDate = weekInfo.sundayOfWeek;
+        }
 
         for (let i = 0; i < listSupers.length; i++) {
           const superAdmin = JSON.parse(
@@ -283,19 +220,14 @@ export class ReportService implements OnModuleInit {
         }
 
         for (let i = 0; i < listMasters.length; i++) {
-          const tmpMaster = listMastersData.filter(
-            (master) => master.full_name === listMasters[i],
+          const master = JSON.parse(
+            await this.getWinLose(
+              weekInfo.startDate,
+              endDate,
+              listMasters[i].trim(),
+            ),
           );
-          if (tmpMaster.length === 0) {
-            const master = JSON.parse(
-              await this.getWinLose(
-                weekInfo.startDate,
-                endDate,
-                listMasters[i].trim(),
-              ),
-            );
-            listMastersData.push(master);
-          }
+          listMastersData.push(master);
         }
 
         superInfo['listMasters'] = listMastersData.filter((master) => master);
@@ -468,8 +400,11 @@ export class ReportService implements OnModuleInit {
   }
 
   async getWinLose(startDate: string, endDate: string, userName: string) {
+    console.log('endDate: ' + endDate);
+
     const uniqueDatesSearch = this.generateDateRange(startDate, endDate);
-    console.log(uniqueDatesSearch);
+
+    console.log('range date', uniqueDatesSearch);
 
     const date = new Date(this.createDateFromDateString(startDate));
 

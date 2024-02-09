@@ -240,15 +240,9 @@ export class ReportController {
       isLastWeek: isLastWeek,
     });
 
-    if (isLastWeek) {
-      return response.send(
-        await this.reportService.getReportNickName(endDate, nickName),
-      );
-    } else {
-      return response.send(
-        await this.reportService.getReportNickNameCustom(endDate, nickName),
-      );
-    }
+    return response.send(
+      await this.reportService.getReportNickName(endDate, nickName, isLastWeek),
+    );
   }
 
   // @Get('nickName/custom')
