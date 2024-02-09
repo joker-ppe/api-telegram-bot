@@ -228,6 +228,7 @@ export class ReportController {
   async GetReportNickName(
     @Query('endDate') endDate: string,
     @Query('nickName') nickName: string,
+    @Query('isLastWeek') isLastWeek: boolean,
     @Res() response: Response,
   ) {
     response.setHeader('Content-Type', 'application/json');
@@ -236,12 +237,38 @@ export class ReportController {
       api: 'report/nickName',
       endDate: endDate,
       nickName: nickName,
+      isLastWeek: isLastWeek,
     });
 
-    return response.send(
-      await this.reportService.getReportNickName(endDate, nickName),
-    );
+    if (isLastWeek) {
+      return response.send(
+        await this.reportService.getReportNickName(endDate, nickName),
+      );
+    } else {
+      return response.send(
+        await this.reportService.getReportNickNameCustom(endDate, nickName),
+      );
+    }
   }
+
+  // @Get('nickName/custom')
+  // async GetReportNickNameCustom(
+  //   @Query('endDate') endDate: string,
+  //   @Query('nickName') nickName: string,
+  //   @Res() response: Response,
+  // ) {
+  //   response.setHeader('Content-Type', 'application/json');
+
+  //   console.log('request: ', {
+  //     api: 'report/nickName/custom',
+  //     endDate: endDate,
+  //     nickName: nickName,
+  //   });
+
+  //   return response.send(
+  //     await this.reportService.getReportNickNameCustom(endDate, nickName),
+  //   );
+  // }
 
   @Get('listReportInfo')
   async GetListReportInfo(

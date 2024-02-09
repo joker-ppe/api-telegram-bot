@@ -47,7 +47,7 @@ export class ReportService implements OnModuleInit {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  @Cron(CronExpression.EVERY_30_SECONDS, { name: 'fetchAndStoreBets' }) // Đặt tần suất cập nhật theo nhu cầu
+  @Cron(CronExpression.EVERY_10_SECONDS, { name: 'fetchAndStoreBets' }) // Đặt tần suất cập nhật theo nhu cầu
   async handleCron() {
     // await this.fetchAndStoreBets();
     if (process.env.INSTANCE_ROLE === 'cron') {
@@ -237,6 +237,86 @@ export class ReportService implements OnModuleInit {
     }
   }
 
+  async getReportNickNameCustom(endDate: string, nickName: string) {
+    const date = new Date(this.createDateFromDateString(endDate));
+
+    console.log('After parse:', date);
+
+    const weekInfo = this.getWeekOfDate(date);
+
+    console.log(JSON.stringify(weekInfo));
+
+    const dataFilePath = `https://raw.githubusercontent.com/joker-ppe/commission/main/config-super/config-week-${weekInfo.weekNumberInYear}-${weekInfo.year}.json`;
+
+    try {
+      const response = await fetch(dataFilePath);
+      const listSupersInfo = await response.json();
+
+      const superInfo = listSupersInfo.find(
+        (superInfo: any) => superInfo.nickName === nickName,
+      );
+
+      if (superInfo) {
+        // console.log({ superInfo });
+
+        const listSupers = superInfo.super.toString().split(';');
+        const listMasters = superInfo.master.toString().split(';');
+
+        // console.log({ listSupers });
+        // console.log({ listMasters });
+
+        const listMastersData = [];
+        const listSupersData = [];
+
+        for (let i = 0; i < listSupers.length; i++) {
+          const superAdmin = JSON.parse(
+            await this.getWinLose(
+              weekInfo.startDate,
+              endDate,
+              listSupers[i].trim(),
+            ),
+          );
+          if (superAdmin) {
+            listSupersData.push(superAdmin);
+            // listMastersData = listMastersData.concat(superAdmin.children);
+          }
+        }
+
+        for (let i = 0; i < listMasters.length; i++) {
+          const tmpMaster = listMastersData.filter(
+            (master) => master.full_name === listMasters[i],
+          );
+          if (tmpMaster.length === 0) {
+            const master = JSON.parse(
+              await this.getWinLose(
+                weekInfo.startDate,
+                endDate,
+                listMasters[i].trim(),
+              ),
+            );
+            listMastersData.push(master);
+          }
+        }
+
+        superInfo['listMasters'] = listMastersData.filter((master) => master);
+        superInfo['listSupers'] = listSupersData.filter(
+          (superAdmin) => superAdmin,
+        );
+
+        return JSON.stringify(superInfo);
+      } else {
+        throw new NotFoundException('Not found');
+      }
+    } catch (error) {
+      console.error(error);
+      console.error(
+        `Chưa có cấu hình báo cáo tuần này: ${weekInfo.weekNumberInYear}-${weekInfo.year}`,
+      );
+
+      throw new NotFoundException(error);
+    }
+  }
+
   async getListReportInfo(endDate: string) {
     const date = new Date(this.createDateFromDateString(endDate));
 
@@ -276,7 +356,15 @@ export class ReportService implements OnModuleInit {
   async getAdminInfo(endDate: string) {
     const admin = JSON.parse(await this.getWinLose(endDate, endDate, 'admin'));
 
+    // console.log(admin);
+
+    if (!admin) {
+      console.log(`Current Outstanding: 0`);
+      return;
+    }
+
     const currentOutstanding = admin.outstanding;
+
     let oldOutstanding = this.outstandingData.get(endDate);
 
     if (!oldOutstanding) {
