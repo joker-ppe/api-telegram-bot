@@ -495,7 +495,19 @@ export class ReportService implements OnModuleInit {
     let listAdmins: User[] = [];
     let betFullData: BetItem[] = [];
 
-    if (startDate === endDate) {
+    if (startDate === '2024-02-05' && weekInfo.weekNumberInYear === 7) {
+      console.log('Case 0: Tết ->', userName);
+
+      const dateData = await this.prismaService.data.findUnique({
+        where: {
+          date: endDate,
+        },
+      });
+      if (dateData) {
+        listAdmins = JSON.parse(dateData.adminDataTet).listAdmins;
+        betFullData = JSON.parse(dateData.adminDataTet).betFullData;
+      }
+    } else if (startDate === endDate) {
       console.log('Case 1: today ->', userName);
 
       const dateData = await this.prismaService.data.findUnique({
@@ -716,6 +728,7 @@ export class ReportService implements OnModuleInit {
           data: null,
           adminDataToDay: null,
           adminDataThisWeek: null,
+          adminDataTet: null,
           createdAt: new Date(),
           updatedAt: new Date(),
         };
@@ -823,6 +836,7 @@ export class ReportService implements OnModuleInit {
             data: null,
             adminDataToDay: null,
             adminDataThisWeek: null,
+            adminDataTet: null,
             createdAt: new Date(),
             updatedAt: new Date(),
           };
@@ -898,6 +912,8 @@ export class ReportService implements OnModuleInit {
       endDate,
     );
 
+    const dataTet = await this.getListUsersWithDataCron('2024-02-05', endDate);
+
     await this.prismaService.data.update({
       where: {
         date: endDate,
@@ -905,6 +921,7 @@ export class ReportService implements OnModuleInit {
       data: {
         adminDataToDay: JSON.stringify(dataToDay),
         adminDataThisWeek: JSON.stringify(dataThisWeek),
+        adminDataTet: JSON.stringify(dataTet),
       },
     });
 

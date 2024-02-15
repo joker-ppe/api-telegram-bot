@@ -38,6 +38,7 @@ model Data {
   data String
   adminDataToDay String?
   adminDataThisWeek String?
+  adminDataTet String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
