@@ -487,7 +487,7 @@ export class ReportService implements OnModuleInit {
 
     console.log('range date', uniqueDatesSearch);
 
-    const date = new Date(this.createDateFromDateString(startDate));
+    const date = new Date(this.createDateFromDateString(endDate));
 
     const weekInfo = this.getWeekOfDate(date);
     // console.log(weekInfo);
