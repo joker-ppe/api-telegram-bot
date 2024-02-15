@@ -245,6 +245,25 @@ export class ReportController {
     );
   }
 
+  @Get('nickName/tet')
+  async GetReportNickNameTet(
+    @Query('endDate') endDate: string,
+    @Query('nickName') nickName: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'report/nickName/tet',
+      endDate: endDate,
+      nickName: nickName,
+    });
+
+    return response.send(
+      await this.reportService.getReportNickNameTet(nickName, endDate),
+    );
+  }
+
   // @Get('nickName/custom')
   // async GetReportNickNameCustom(
   //   @Query('endDate') endDate: string,

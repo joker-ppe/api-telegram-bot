@@ -50,6 +50,7 @@ export class ReportService implements OnModuleInit {
   @Cron(CronExpression.EVERY_10_SECONDS, { name: 'fetchAndStoreBets' }) // Đặt tần suất cập nhật theo nhu cầu
   async handleCron() {
     // await this.fetchAndStoreBets();
+
     if (process.env.INSTANCE_ROLE === 'cron') {
       // Chạy cron job
       // console.log('I am a Cron job instance');
@@ -86,11 +87,11 @@ export class ReportService implements OnModuleInit {
 
       const weekInfo = this.getWeekOfDate(date);
 
-      // console.log(JSON.stringify(weekInfo));
+      console.log(JSON.stringify(weekInfo));
 
-      await this.getWinLoseCron(weekInfo.startDate, currentDateString);
+      // await this.getWinLoseCron(weekInfo.startDate, currentDateString);
 
-      // await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
+      await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
 
       // await this.getWinLoseCron('2023-11-21', currentDateString);
 
@@ -234,6 +235,86 @@ export class ReportService implements OnModuleInit {
         superInfo['listSupers'] = listSupersData.filter(
           (superAdmin) => superAdmin,
         );
+
+        superInfo['fromDate'] = weekInfo.startDate;
+        superInfo['toDate'] = endDate;
+
+        return JSON.stringify(superInfo);
+      } else {
+        throw new NotFoundException('Not found');
+      }
+    } catch (error) {
+      console.error(error);
+      console.error(
+        `Chưa có cấu hình báo cáo tuần này: ${weekInfo.weekNumberInYear}-${weekInfo.year}`,
+      );
+
+      throw new NotFoundException(error);
+    }
+  }
+
+  async getReportNickNameTet(nickName: string, endDate: string) {
+    const date = new Date(this.createDateFromDateString('2024-02-11'));
+
+    console.log('After parse:', date);
+
+    const weekInfo = this.getWeekOfDate(date);
+
+    console.log(JSON.stringify(weekInfo));
+
+    const dataFilePath = `https://raw.githubusercontent.com/joker-ppe/commission/main/config-super/config-week-${weekInfo.weekNumberInYear}-${weekInfo.year}.json`;
+
+    try {
+      const response = await fetch(dataFilePath);
+      const listSupersInfo = await response.json();
+
+      const superInfo = listSupersInfo.find(
+        (superInfo: any) => superInfo.nickName === nickName,
+      );
+
+      if (superInfo) {
+        // console.log({ superInfo });
+
+        let listSupers = superInfo.super.toString().split(';');
+        let listMasters = superInfo.master.toString().split(';');
+
+        listSupers = listSupers.filter(
+          (tmp: string, index: number, self: string[]) =>
+            tmp !== '' && self.indexOf(tmp) === index,
+        );
+        // console.log({ listSupers });
+        listMasters = listMasters.filter(
+          (master: string, index: number, self: string[]) =>
+            master !== '' && self.indexOf(master) === index,
+        );
+        // console.log({ listMasters });
+
+        const listMastersData = [];
+        const listSupersData = [];
+
+        for (let i = 0; i < listSupers.length; i++) {
+          const superAdmin = JSON.parse(
+            await this.getWinLose('2024-02-05', endDate, listSupers[i].trim()),
+          );
+          if (superAdmin) {
+            listSupersData.push(superAdmin);
+          }
+        }
+
+        for (let i = 0; i < listMasters.length; i++) {
+          const master = JSON.parse(
+            await this.getWinLose('2024-02-05', endDate, listMasters[i].trim()),
+          );
+          listMastersData.push(master);
+        }
+
+        superInfo['listMasters'] = listMastersData.filter((master) => master);
+        superInfo['listSupers'] = listSupersData.filter(
+          (superAdmin) => superAdmin,
+        );
+
+        superInfo['fromDate'] = '2024-02-05';
+        superInfo['toDate'] = endDate;
 
         return JSON.stringify(superInfo);
       } else {
@@ -631,7 +712,7 @@ export class ReportService implements OnModuleInit {
         dataDate = {
           date: date,
           lastTotalPage: 1,
-          lastTotalRow: 0,
+          lastTotalRow: -1,
           data: null,
           adminDataToDay: null,
           adminDataThisWeek: null,
