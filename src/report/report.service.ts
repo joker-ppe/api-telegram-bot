@@ -350,13 +350,13 @@ export class ReportService implements OnModuleInit {
     const sum1 = history1.reduce((total, date) => total + date, 0);
 
     const dates2 = [
-      '2024-02-05',
-      '2024-02-06',
-      '2024-02-07',
-      '2024-02-08',
-      '2024-02-09',
-      '2024-02-10',
-      '2024-02-11',
+      '2024-02-12',
+      '2024-02-13',
+      '2024-02-14',
+      '2024-02-15',
+      '2024-02-16',
+      '2024-02-17',
+      '2024-02-18',
     ];
 
     const history2 = dates2.map((date) => user.history[date] || 0);
