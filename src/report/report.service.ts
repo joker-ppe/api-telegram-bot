@@ -335,18 +335,36 @@ export class ReportService implements OnModuleInit {
       await this.getWinLose('2024-02-05', '2024-02-18', userName),
     );
 
-    let yesterdayData = user.history['2024-02-17'];
-    if (!yesterdayData) {
-      yesterdayData = 0;
-    }
+    const dates1 = [
+      '2024-02-05',
+      '2024-02-06',
+      '2024-02-07',
+      '2024-02-08',
+      '2024-02-09',
+      '2024-02-10',
+      '2024-02-11',
+    ];
 
-    let todayData = user.history['2024-02-18'];
-    if (!todayData) {
-      todayData = 0;
-    }
+    const history1 = dates1.map((date) => user.history[date] || 0);
 
-    user['yesterdayData'] = yesterdayData;
-    user['todayData'] = todayData;
+    const sum1 = history1.reduce((total, date) => total + date, 0);
+
+    const dates2 = [
+      '2024-02-05',
+      '2024-02-06',
+      '2024-02-07',
+      '2024-02-08',
+      '2024-02-09',
+      '2024-02-10',
+      '2024-02-11',
+    ];
+
+    const history2 = dates2.map((date) => user.history[date] || 0);
+
+    const sum2 = history2.reduce((total, date) => total + date, 0);
+
+    user['beforeTet'] = sum1;
+    user['afterTet'] = sum2;
 
     user['tet'] = true;
 
