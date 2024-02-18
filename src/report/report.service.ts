@@ -89,9 +89,9 @@ export class ReportService implements OnModuleInit {
 
       console.log(JSON.stringify(weekInfo));
 
-      // await this.getWinLoseCron(weekInfo.startDate, currentDateString);
+      await this.getWinLoseCron(weekInfo.startDate, currentDateString);
 
-      await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
+      // await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
 
       // await this.getWinLoseCron('2023-11-21', currentDateString);
 
@@ -328,6 +328,36 @@ export class ReportService implements OnModuleInit {
 
       throw new NotFoundException(error);
     }
+  }
+
+  async getUserTet(userName: string) {
+    const user = JSON.parse(
+      await this.getWinLose('2024-02-05', '2024-02-18', userName),
+    );
+
+    let yesterdayData = user.history['2024-02-17'];
+    if (!yesterdayData) {
+      yesterdayData = 0;
+    }
+
+    let todayData = user.history['2024-02-18'];
+    if (!todayData) {
+      todayData = 0;
+    }
+
+    user['yesterdayData'] = yesterdayData;
+    user['todayData'] = todayData;
+
+    user['tet'] = true;
+
+    ////////////////////////////////////////////////////////////////////////
+
+    user.parent = {};
+
+    // const userBetData = [];
+    // userBetData.forEach((betSlip) => {});
+
+    return JSON.stringify(user);
   }
 
   async getListReportInfo(endDate: string) {

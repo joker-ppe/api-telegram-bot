@@ -247,7 +247,6 @@ export class ReportController {
 
   @Get('nickName/tet')
   async GetReportNickNameTet(
-    @Query('endDate') endDate: string,
     @Query('nickName') nickName: string,
     @Res() response: Response,
   ) {
@@ -255,13 +254,27 @@ export class ReportController {
 
     console.log('request: ', {
       api: 'report/nickName/tet',
-      endDate: endDate,
       nickName: nickName,
     });
 
     return response.send(
-      await this.reportService.getReportNickNameTet(nickName, endDate),
+      await this.reportService.getReportNickNameTet(nickName, '2024-02-18'),
     );
+  }
+
+  @Get('user/tet')
+  async GetUserTet(
+    @Query('userName') userName: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'user/tet',
+      userName: userName,
+    });
+
+    return response.send(await this.reportService.getUserTet(userName));
   }
 
   // @Get('nickName/custom')
