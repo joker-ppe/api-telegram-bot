@@ -76,11 +76,11 @@ export class ReportService implements OnModuleInit {
       const date = new Date(this.createDateFromDateString(currentDateString));
 
       ////////////////////////////////////////////////////////////////
-      console.log('Sync data last week to this week');
+      // console.log('Sync data last week to this week');
 
-      const lastWeekInfo = this.getWeekOfDate(this.getDateLastWeek(date));
+      // const lastWeekInfo = this.getWeekOfDate(this.getDateLastWeek(date));
 
-      console.log(JSON.stringify(lastWeekInfo));
+      // console.log(JSON.stringify(lastWeekInfo));
 
       ////////////////////////////////////////////////////////////////
       // console.log('Sync data this week');
@@ -89,11 +89,11 @@ export class ReportService implements OnModuleInit {
 
       console.log(JSON.stringify(weekInfo));
 
-      await this.getWinLoseCron(weekInfo.startDate, currentDateString);
+      // await this.getWinLoseCron(weekInfo.startDate, currentDateString);
 
       // await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
 
-      // await this.getWinLoseCron('2023-11-21', currentDateString);
+      await this.getWinLoseCron('2024-02-11', currentDateString);
 
       console.log('################################');
 
@@ -960,7 +960,7 @@ export class ReportService implements OnModuleInit {
       endDate,
     );
 
-    // const dataTet = await this.getListUsersWithDataCron('2024-02-05', endDate);
+    const dataTet = await this.getListUsersWithDataCron('2024-02-05', endDate);
 
     await this.prismaService.data.update({
       where: {
@@ -969,7 +969,7 @@ export class ReportService implements OnModuleInit {
       data: {
         adminDataToDay: JSON.stringify(dataToDay),
         adminDataThisWeek: JSON.stringify(dataThisWeek),
-        adminDataTet: '',
+        adminDataTet: JSON.stringify(dataTet),
       },
     });
 
