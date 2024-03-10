@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BetItem, User } from './dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
+// import xsmb from 'src/xsmb/xsmb';
 
 @Injectable()
 export class ReportService implements OnModuleInit {
@@ -50,6 +51,8 @@ export class ReportService implements OnModuleInit {
   @Cron(CronExpression.EVERY_10_SECONDS, { name: 'fetchAndStoreBets' }) // Đặt tần suất cập nhật theo nhu cầu
   async handleCron() {
     // await this.fetchAndStoreBets();
+
+    // await xsmb.getResultXsmb(); // Call the getResultXsmb function directly
 
     if (process.env.INSTANCE_ROLE === 'cron') {
       // Chạy cron job
@@ -735,7 +738,7 @@ export class ReportService implements OnModuleInit {
 
       user['line'] = line;
       user['title'] = title;
-      user['list_children'] = listChildren;
+      user['list_children'] = listChildren.filter((child) => child.profit > 0);
       user['data_bet'] = summarizedNumbers;
 
       // console.log(user['data']);
