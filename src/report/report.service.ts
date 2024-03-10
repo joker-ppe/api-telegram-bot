@@ -738,7 +738,9 @@ export class ReportService implements OnModuleInit {
 
       user['line'] = line;
       user['title'] = title;
-      user['list_children'] = listChildren.filter((child) => child.profit > 0);
+      user['list_children'] = listChildren.filter(
+        (child) => child.profit !== 0,
+      );
       user['data_bet'] = summarizedNumbers;
 
       // console.log(user['data']);
