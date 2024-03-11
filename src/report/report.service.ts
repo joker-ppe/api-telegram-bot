@@ -739,7 +739,7 @@ export class ReportService implements OnModuleInit {
       user['line'] = line;
       user['title'] = title;
       user['list_children'] = listChildren.filter(
-        (child) => child.profit !== 0,
+        (child) => child.profit !== 0 || child.outstanding !== 0,
       );
       user['data_bet'] = summarizedNumbers;
 

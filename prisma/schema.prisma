@@ -33,12 +33,12 @@ model Data {
   date String @id
 
   lastTotalPage Int @default(1)
-  lastTotalRow Int @default(0)
+  lastTotalRow  Int @default(0)
 
-  data String
-  adminDataToDay String?
+  data              String
+  adminDataToDay    String?
   adminDataThisWeek String?
-  adminDataTet String?
+  adminDataTet      String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -77,4 +77,30 @@ model BetData {
   updatedAt DateTime @updatedAt
 
   @@map("bet_data")
+}
+
+model ResultLottery {
+  id   Int    @id @default(autoincrement())
+  date String
+
+  priceDb String @default("")
+
+  priceG1 String @default("")
+
+  priceG2 String @default("")
+
+  priceG3 String @default("")
+
+  priceG4 String @default("")
+
+  priceG5 String @default("")
+
+  priceG6 String @default("")
+
+  priceG7 String @default("")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("resultLotteries")
 }
