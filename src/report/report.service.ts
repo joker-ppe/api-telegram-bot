@@ -68,15 +68,31 @@ export class ReportService implements OnModuleInit {
     if (process.env.INSTANCE_ROLE === 'cron') {
       // Chạy cron job
       // console.log('I am a Cron job instance');
-      const currentHour = new Date().getHours();
-      const currentMinute = new Date().getMinutes();
+      const date = new Date();
+      const options: Intl.DateTimeFormatOptions = {
+        timeZone: 'Asia/Bangkok',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      };
+      const formatter = new Intl.DateTimeFormat([], options);
+
+      const timeParts = formatter.formatToParts(date);
+      const currentHour = timeParts.find((part) => part.type === 'hour').value;
+      const currentMinute = timeParts.find(
+        (part) => part.type === 'minute',
+      ).value;
 
       if (this.isRunningCronXsmb) {
         console.log('Cron job XSMB is running. Skip this time.');
         return;
       }
       this.isRunningCronXsmb = true;
-      if (currentHour === 18 && currentMinute >= 15 && currentMinute <= 40) {
+      if (
+        parseInt(currentHour) === 18 &&
+        parseInt(currentMinute) >= 15 &&
+        parseInt(currentMinute) <= 40
+      ) {
         try {
           await this.fetchResultsXsmb();
         } catch (e) {
