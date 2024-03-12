@@ -40,6 +40,8 @@ model Data {
   adminDataThisWeek String?
   adminDataTet      String?
 
+  // adminBetGame String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -81,24 +83,29 @@ model BetData {
 
 model ResultLottery {
   id   Int    @id @default(autoincrement())
-  date String
+  date String @unique
 
-  priceDb String @default("")
+  done Boolean @default(false)
 
-  priceG1 String @default("")
+  prizeDb String @default("")
+  prizeG1 String @default("")
+  prizeG2 String @default("")
+  prizeG3 String @default("")
+  prizeG4 String @default("")
+  prizeG5 String @default("")
+  prizeG6 String @default("")
+  prizeG7 String @default("")
 
-  priceG2 String @default("")
+  ketQuaDeDau       String @default("")
+  ketQuaDeDuoi      String @default("")
+  ketQuaDeDauGiai1  String @default("")
+  ketQuaDeDuoiGiai1 String @default("")
+  ketQuaLoDau       String @default("")
+  ketQuaLoDuoi      String @default("")
+  ketQuaXien2       String @default("")
+  ketQuaXien3       String @default("")
+  ketQuaXien4       String @default("")
 
-  priceG3 String @default("")
-
-  priceG4 String @default("")
-
-  priceG5 String @default("")
-
-  priceG6 String @default("")
-
-  priceG7 String @default("")
-  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

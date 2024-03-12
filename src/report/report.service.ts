@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { BetItem, User } from './dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
-// import xsmb from 'src/xsmb/xsmb';
+import xsmb from 'src/xsmb/xsmb';
 
 @Injectable()
 export class ReportService implements OnModuleInit {
@@ -11,6 +11,7 @@ export class ReportService implements OnModuleInit {
   private apiKey: string;
   // private minuteHasResults: number = 34;
   private isRunningCron = false;
+  private isRunningCronXsmb = false;
 
   private token = '6695572072:AAGxx6Rn8wyTshwhFfOnfSY6AKfhSvJIa6o'; // Replace with your Telegram bot's token
   private chatId = '-1002109063811';
@@ -42,6 +43,7 @@ export class ReportService implements OnModuleInit {
       console.error('Error sending message: ', error);
     }
   };
+
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
   private sleep(ms: number) {
@@ -50,16 +52,493 @@ export class ReportService implements OnModuleInit {
 
   @Cron(CronExpression.EVERY_10_SECONDS, { name: 'fetchAndStoreBets' }) // Đặt tần suất cập nhật theo nhu cầu
   async handleCron() {
-    // await this.fetchAndStoreBets();
-
-    // await xsmb.getResultXsmb(); // Call the getResultXsmb function directly
-
     if (process.env.INSTANCE_ROLE === 'cron') {
       // Chạy cron job
       // console.log('I am a Cron job instance');
       await this.fetchAndStoreBets();
     } else {
       // console.log('Not a Cron job instance');
+    }
+
+    // await this.fetchAndStoreBets();
+  }
+
+  @Cron(CronExpression.EVERY_10_SECONDS, { name: 'fetchResultsXsmb' }) // Đặt tần suất cập nhật theo nhu cầu
+  async cronFetchResultsXsmb() {
+    if (process.env.INSTANCE_ROLE === 'cron') {
+      // Chạy cron job
+      // console.log('I am a Cron job instance');
+      const currentHour = new Date().getHours();
+      const currentMinute = new Date().getMinutes();
+
+      if (this.isRunningCronXsmb) {
+        console.log('Cron job XSMB is running. Skip this time.');
+        return;
+      }
+      this.isRunningCronXsmb = true;
+      if (currentHour === 18 && currentMinute >= 15 && currentMinute <= 40) {
+        try {
+          await this.fetchResultsXsmb();
+        } catch (e) {
+          console.error(e);
+          this.isRunningCronXsmb = false;
+        }
+      } else {
+        console.log(
+          `Not in time. Current time is ${currentHour}:${currentMinute}`,
+        );
+      }
+      this.isRunningCronXsmb = false;
+    } else {
+      // console.log('Not a Cron job instance');
+    }
+  }
+
+  async fetchResultsXsmb() {
+    let todayResult = await this.prismaService.resultLottery.findUnique({
+      where: {
+        date: xsmb.getCurrentDate(),
+      },
+    });
+
+    if (!todayResult) {
+      todayResult = await this.prismaService.resultLottery.create({
+        data: {
+          date: xsmb.getCurrentDate(),
+        },
+      });
+      console.log('Created date data results');
+    }
+
+    // console.log('Today result: ', todayResult.done);
+
+    if (todayResult.done !== true) {
+      const result = await xsmb.getResultXsmb();
+      console.log(result);
+
+      // check and save results to database
+      const prizeDb = result.prizeDb.toString();
+      const prizeG1 = result.prizeG1.toString();
+      const prizeG2 =
+        result.prizeG2.length === 0 ? '' : result.prizeG2.toString();
+      const prizeG3 =
+        result.prizeG3.length === 0 ? '' : result.prizeG3.toString();
+      const prizeG4 =
+        result.prizeG4.length === 0 ? '' : result.prizeG4.toString();
+      const prizeG5 =
+        result.prizeG5.length === 0 ? '' : result.prizeG5.toString();
+      const prizeG6 =
+        result.prizeG6.length === 0 ? '' : result.prizeG6.toString();
+      const prizeG7 =
+        result.prizeG7.length === 0 ? '' : result.prizeG7.toString();
+
+      let todayResult = await this.prismaService.resultLottery.findUnique({
+        where: {
+          date: result.date,
+        },
+      });
+
+      if (
+        todayResult.prizeDb !== prizeDb ||
+        todayResult.prizeG1 !== prizeG1 ||
+        todayResult.prizeG2 !== prizeG2 ||
+        todayResult.prizeG3 !== prizeG3 ||
+        todayResult.prizeG4 !== prizeG4 ||
+        todayResult.prizeG5 !== prizeG5 ||
+        todayResult.prizeG6 !== prizeG6 ||
+        todayResult.prizeG7 !== prizeG7
+      ) {
+        todayResult = await this.prismaService.resultLottery.update({
+          where: {
+            date: result.date,
+          },
+          data: {
+            prizeDb: prizeDb,
+            prizeG1: prizeG1,
+            prizeG2: prizeG2,
+            prizeG3: prizeG3,
+            prizeG4: prizeG4,
+            prizeG5: prizeG5,
+            prizeG6: prizeG6,
+            prizeG7: prizeG7,
+          },
+        });
+        console.log('Updated results to database');
+      } else {
+        console.log('No data changed to database');
+      }
+
+      // add results number
+
+      // check Đề Đầu Đặc Biệt
+      if (result.ketQuaDeDau !== todayResult.ketQuaDeDau) {
+        todayResult = await this.prismaService.resultLottery.update({
+          where: {
+            date: result.date,
+          },
+          data: {
+            ketQuaDeDau: result.ketQuaDeDau,
+          },
+        });
+      }
+
+      // check Đề Đuôi Đặc Biệt
+      if (result.ketQuaDeDuoi !== todayResult.ketQuaDeDuoi) {
+        todayResult = await this.prismaService.resultLottery.update({
+          where: {
+            date: result.date,
+          },
+          data: {
+            ketQuaDeDuoi: result.ketQuaDeDuoi,
+          },
+        });
+      }
+
+      // check Đề Đầu Giải 1
+      if (result.ketQuaDeDauGiai1 !== todayResult.ketQuaDeDauGiai1) {
+        todayResult = await this.prismaService.resultLottery.update({
+          where: {
+            date: result.date,
+          },
+          data: {
+            ketQuaDeDauGiai1: result.ketQuaDeDauGiai1,
+          },
+        });
+      }
+
+      // check Đề Đuôi Giải 1
+      if (result.ketQuaDeDuoiGiai1 !== todayResult.ketQuaDeDuoiGiai1) {
+        todayResult = await this.prismaService.resultLottery.update({
+          where: {
+            date: result.date,
+          },
+          data: {
+            ketQuaDeDuoiGiai1: result.ketQuaDeDuoiGiai1,
+          },
+        });
+      }
+
+      // check Lô Đầu
+      if (result.ketQuaLoDau.toString() !== todayResult.ketQuaLoDau) {
+        todayResult = await this.prismaService.resultLottery.update({
+          where: {
+            date: result.date,
+          },
+          data: {
+            ketQuaLoDau: result.ketQuaLoDau.toString(),
+          },
+        });
+      }
+
+      // check Lô Đuôi
+      if (result.ketQuaLoDuoi.toString() !== todayResult.ketQuaLoDuoi) {
+        todayResult = await this.prismaService.resultLottery.update({
+          where: {
+            date: result.date,
+          },
+          data: {
+            ketQuaLoDuoi: result.ketQuaLoDuoi.toString(),
+          },
+        });
+      }
+
+      // check Xiên 2
+      if (result.ketQuaXien2.toString() !== todayResult.ketQuaXien2) {
+        todayResult = await this.prismaService.resultLottery.update({
+          where: {
+            date: result.date,
+          },
+          data: {
+            ketQuaXien2: result.ketQuaXien2.toString(),
+          },
+        });
+      }
+
+      // check Xiên 3
+      if (result.ketQuaXien3.toString() !== todayResult.ketQuaXien3) {
+        todayResult = await this.prismaService.resultLottery.update({
+          where: {
+            date: result.date,
+          },
+          data: {
+            ketQuaXien3: result.ketQuaXien3.toString(),
+          },
+        });
+      }
+
+      // check Xiên 4
+      if (result.ketQuaXien4.toString() !== todayResult.ketQuaXien4) {
+        todayResult = await this.prismaService.resultLottery.update({
+          where: {
+            date: result.date,
+          },
+          data: {
+            ketQuaXien4: result.ketQuaXien4.toString(),
+          },
+        });
+      }
+
+      let textReport = '';
+
+      // check done
+      if (result.ketQuaLoDuoi.length === 27 && result.prizeDb.length !== 0) {
+        todayResult = await this.prismaService.resultLottery.update({
+          where: {
+            date: result.date,
+          },
+          data: {
+            done: true,
+          },
+        });
+
+        textReport += `Báo cáo hoàn chỉnh:\n=====================\n\n`;
+
+        console.log('Today result has synced done');
+      } else {
+        textReport += `Báo cáo đang cập nhật ...\n=====================\n\n`;
+      }
+
+      // check show báo cáo
+      const dateReport = xsmb.getCurrentDateFormatApi();
+      const admin = JSON.parse(
+        await this.getWinLose(dateReport, dateReport, 'admin'),
+      );
+      // console.log(admin['data_bet']['0']);
+      const deDau = admin['data_bet']['0'];
+      const deDuoi = admin['data_bet']['1'];
+      const deDauGiai1 = admin['data_bet']['2'];
+      const deDuoiGiai1 = admin['data_bet']['3'];
+      const loDau = admin['data_bet']['4'];
+      const loDuoi = admin['data_bet']['5'];
+      const xien2 = admin['data_bet']['6'];
+      const xien3 = admin['data_bet']['7'];
+      const xien4 = admin['data_bet']['8'];
+
+      let totalAmount = 0;
+      let totalLost = 0;
+      // check de dau
+      if (todayResult.ketQuaDeDau.length > 0 && deDau) {
+        const result = deDau['listNumber'].find(
+          (item) => item.number === todayResult.ketQuaDeDau,
+        );
+
+        const total = deDau['amount'];
+        const lost = 70000 * parseInt(result['point']);
+
+        totalAmount += total;
+        totalLost += lost;
+
+        // console.log('deDau', result);
+        textReport += `Đề đầu:\nTổng lượng: ${total.toLocaleString()}\n${
+          result['number']
+        } - ${result['point']} điểm - ${lost.toLocaleString()}\n=> ${(
+          total - lost
+        ).toLocaleString()}\n\n`;
+      }
+
+      // check de duoi
+      if (todayResult.ketQuaDeDuoi.length > 0 && deDuoi) {
+        const result = deDuoi['listNumber'].find(
+          (item) => item.number === todayResult.ketQuaDeDuoi,
+        );
+
+        const total = deDuoi['amount'];
+        const lost = 70000 * parseInt(result['point']);
+
+        totalAmount += total;
+        totalLost += lost;
+
+        textReport += `Đề đuôi:\nTổng lượng: ${total.toLocaleString()}\n${
+          result['number']
+        } - ${result['point']} điểm - ${lost.toLocaleString()}\n=> ${(
+          total - lost
+        ).toLocaleString()}\n\n`;
+      }
+
+      // check de dau giai 1
+      if (todayResult.ketQuaDeDauGiai1.length > 0 && deDauGiai1) {
+        const result = deDauGiai1['listNumber'].find(
+          (item) => item.number === todayResult.ketQuaDeDauGiai1,
+        );
+
+        const total = deDauGiai1['amount'];
+        const lost = 70000 * parseInt(result['point']);
+
+        totalAmount += total;
+        totalLost += lost;
+
+        // console.log('de dau Giai 1', result);
+        textReport += `Đề đầu giải 1:\nTổng lượng: ${total.toLocaleString()}\n${
+          result['number']
+        } - ${result['point']} điểm - ${lost.toLocaleString()}\n=> ${(
+          total - lost
+        ).toLocaleString()}\n\n`;
+      }
+
+      // check de duoi giai 1
+      if (todayResult.ketQuaDeDuoiGiai1.length > 0 && deDuoiGiai1) {
+        const result = deDuoiGiai1['listNumber'].find(
+          (item) => item.number === todayResult.ketQuaDeDuoiGiai1,
+        );
+
+        const total = deDuoiGiai1['amount'];
+        const lost = 70000 * parseInt(result['point']);
+
+        totalAmount += total;
+        totalLost += lost;
+
+        // console.log('de Duoi Giai 1', result);
+        textReport += `Đề đuôi giải 1:\nTổng lượng: ${total.toLocaleString()}\n${
+          result['number']
+        } - ${result['point']} điểm - ${lost.toLocaleString()}\n=> ${(
+          total - lost
+        ).toLocaleString()}\n\n`;
+      }
+
+      // check lo dau
+      const listLoDau = todayResult.ketQuaLoDau.split(',');
+      if (listLoDau.length > 0 && loDau) {
+        textReport += 'Lô đầu:\n';
+        let lostLoDau = 0;
+        const total = loDau['amount'];
+        for (let i = 0; i < listLoDau.length; i++) {
+          const result = loDau['listNumber'].find((item) => {
+            return item['number'] === listLoDau[i];
+          });
+
+          if (result) {
+            textReport += `${result['number']} - ${result['point']} điểm - ${(
+              80000 * parseInt(result['point'])
+            ).toLocaleString()}\n`;
+            lostLoDau += 80000 * parseInt(result['point']);
+          }
+        }
+
+        totalAmount += total;
+        totalLost += lostLoDau;
+
+        textReport += `Tổng toang: ${lostLoDau.toLocaleString()}\nTổng lượng: ${total.toLocaleString()}\n=> ${(
+          loDau['amount'] - lostLoDau
+        ).toLocaleString()}\n\n`;
+      }
+
+      // check lo duoi
+      const listLoDuoi = todayResult.ketQuaLoDuoi.split(',');
+      if (listLoDuoi.length > 0 && loDuoi) {
+        textReport += 'Lô đuôi:\n';
+        let lostLoDuoi = 0;
+        const total = loDuoi['amount'];
+        for (let i = 0; i < listLoDuoi.length; i++) {
+          const result = loDuoi['listNumber'].find((item) => {
+            return item['number'] === listLoDuoi[i];
+          });
+
+          if (result) {
+            textReport += `${result['number']} - ${result['point']} điểm - ${(
+              80000 * parseInt(result['point'])
+            ).toLocaleString()}\n`;
+            lostLoDuoi += 80000 * parseInt(result['point']);
+          }
+        }
+
+        totalAmount += total;
+        totalLost += lostLoDuoi;
+
+        textReport += `Tổng toang: ${lostLoDuoi.toLocaleString()}\nTổng lượng: ${total.toLocaleString()}\n=> ${(
+          loDuoi['amount'] - lostLoDuoi
+        ).toLocaleString()}\n\n`;
+      }
+
+      // check xien 2
+      const listXien2 = todayResult.ketQuaXien2.split(',');
+      if (listXien2.length > 0 && xien2) {
+        textReport += 'Xiên 2:\n';
+        let lostXien2 = 0;
+        const total = xien2['amount'];
+        for (let i = 0; i < listXien2.length; i++) {
+          const result = xien2['listNumber'].find((item) => {
+            return item['number'] === listXien2[i];
+          });
+
+          if (result) {
+            textReport += `[${result['number']}] - ${result['point']} điểm - ${(
+              10000 * parseInt(result['point'])
+            ).toLocaleString()}\n`;
+            lostXien2 += 10000 * parseInt(result['point']);
+          }
+        }
+
+        totalAmount += total;
+        totalLost += lostXien2;
+
+        textReport += `Tổng toang: ${lostXien2.toLocaleString()}\nTổng lượng: ${total.toLocaleString()}\n=> ${(
+          xien2['amount'] - lostXien2
+        ).toLocaleString()}\n\n`;
+      }
+
+      // check xien 3
+      const listXien3 = todayResult.ketQuaXien3.split(',');
+      if (listXien3.length > 0 && xien3) {
+        textReport += 'Xiên 3:\n';
+        let lostXien3 = 0;
+        const total = xien3['amount'];
+        for (let i = 0; i < listXien3.length; i++) {
+          const result = xien3['listNumber'].find((item) => {
+            return item['number'] === listXien3[i];
+          });
+
+          if (result) {
+            textReport += `[${result['number']}] - ${result['point']} điểm - ${(
+              40000 * parseInt(result['point'])
+            ).toLocaleString()}\n`;
+            lostXien3 += 40000 * parseInt(result['point']);
+          }
+        }
+
+        totalAmount += total;
+        totalLost += lostXien3;
+
+        textReport += `Tổng toang: ${lostXien3.toLocaleString()}\nTổng lượng: ${total.toLocaleString()}\n=> ${(
+          xien3['amount'] - lostXien3
+        ).toLocaleString()}\n\n`;
+      }
+
+      // check xien 4
+      const listXien4 = todayResult.ketQuaXien4.split(',');
+      if (listXien4.length > 0 && xien4) {
+        textReport += 'Xiên 4:\n';
+        let lostXien4 = 0;
+        const total = xien4['amount'];
+        for (let i = 0; i < listXien4.length; i++) {
+          const result = xien4['listNumber'].find((item) => {
+            return item['number'] === listXien4[i];
+          });
+
+          if (result) {
+            textReport += `[${result['number']}] - ${result['point']} điểm - ${(
+              100000 * parseInt(result['point'])
+            ).toLocaleString()}\n`;
+            lostXien4 += 100000 * parseInt(result['point']);
+          }
+        }
+
+        totalAmount += total;
+        totalLost += lostXien4;
+
+        textReport += `Tổng toang: ${lostXien4.toLocaleString()}\nTổng lượng: ${total.toLocaleString()}\n=> ${(
+          xien4['amount'] - lostXien4
+        ).toLocaleString()}\n\n`;
+      }
+
+      textReport += `=====================\n\n`;
+      textReport += `Tổng toang toàn sàn: ${totalLost.toLocaleString()}\nTổng lượng toàn sàn: ${totalAmount.toLocaleString()}\n=> ${(
+        totalAmount - totalLost
+      ).toLocaleString()}`;
+
+      // console.log(textReport);
+      await this.sendMessage(textReport);
+    } else {
+      console.log('Today result is done');
     }
   }
 
@@ -92,11 +571,11 @@ export class ReportService implements OnModuleInit {
 
       console.log(JSON.stringify(weekInfo));
 
-      await this.getWinLoseCron(weekInfo.startDate, currentDateString);
+      // await this.getWinLoseCron(weekInfo.startDate, currentDateString);
 
       // await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
 
-      // await this.getWinLoseCron('2024-02-11', currentDateString);
+      await this.getWinLoseCron('2024-01-01', currentDateString);
 
       console.log('################################');
 
@@ -718,15 +1197,49 @@ export class ReportService implements OnModuleInit {
         for (const betType in data) {
           let point = 0;
           let amount = 0;
+          const listNumber = [];
 
-          data[betType].forEach((bet) => {
+          data[betType].forEach((bet: BetItem) => {
             point += bet.point;
             amount += bet.amount;
+
+            let number = bet.number[0];
+
+            bet.number = bet.number.sort((a, b) => parseInt(a) - parseInt(b));
+
+            if (bet.number.length === 2) {
+              number = bet.number[0] + '-' + bet.number[1];
+            } else if (bet.number.length === 3) {
+              number =
+                bet.number[0] + '-' + bet.number[1] + '-' + bet.number[2];
+            } else if (bet.number.length === 4) {
+              number =
+                bet.number[0] +
+                '-' +
+                bet.number[1] +
+                '-' +
+                bet.number[2] +
+                '-' +
+                bet.number[3];
+            }
+
+            const numberData = listNumber.find((n) => n.number === number);
+            if (numberData) {
+              numberData.point += bet.point;
+              numberData.amount += bet.amount;
+            } else {
+              listNumber.push({
+                number: number,
+                point: bet.point,
+                amount: bet.amount,
+              });
+            }
           });
 
           summary[betType] = {
             point: point,
             amount: amount,
+            listNumber: listNumber.sort((a, b) => a.number - b.number),
           };
         }
 
@@ -1328,7 +1841,7 @@ export class ReportService implements OnModuleInit {
 
       const results = await Promise.all(
         Array.from({ length: totalPage }, (_, i) =>
-          this.fetchWithRetry(3, i + 1, fromDate, toDate, type, userUuid),
+          this.fetchWithRetry(10, i + 1, fromDate, toDate, type, userUuid),
         ),
       );
 
@@ -1376,7 +1889,7 @@ export class ReportService implements OnModuleInit {
         const results = await Promise.all(
           Array.from({ length: totalPage - lastTotalPage + 1 }, (_, i) =>
             this.fetchWithRetry(
-              3, // max tries to fetch
+              10, // max tries to fetch
               i + 1, // lấy data từ page cũ
               // i + 1,
               fromDate,
@@ -1494,7 +2007,6 @@ export class ReportService implements OnModuleInit {
         // return []; // Trả về mảng rỗng nếu có lỗi
       });
   }
-
   private async fetchWithRetry(
     maxRetries: number,
     page: number,
@@ -1995,9 +2507,7 @@ export class ReportService implements OnModuleInit {
     const month = parts.find((part) => part.type === 'month').value;
     const day = parts.find((part) => part.type === 'day').value;
 
-    const currentDateString = `${year}-${month}-${day}`;
-
-    return currentDateString;
+    return `${year}-${month}-${day}`;
   }
 
   private getCurrentDateTimeString(): string {
@@ -2012,8 +2522,6 @@ export class ReportService implements OnModuleInit {
       second: '2-digit',
       hour12: false,
     });
-    const formattedDate = formatter.format(currentDate);
-
-    return formattedDate;
+    return formatter.format(currentDate);
   }
 }
