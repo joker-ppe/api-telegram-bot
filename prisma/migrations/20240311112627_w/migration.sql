@@ -102,3 +102,9 @@ CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "resultLotteries_date_key" ON "resultLotteries"("date");
+
+INSERT INTO "keys" ("name", "key", "createdAt", "updatedAt") VALUES ('api_key_device', 'InVMJN87fOOSvcI15qYnTRDj2YYe8hxH', '2024-03-11T04:26:27.000Z', '2024-03-11T04:26:27.000Z');
+INSERT INTO "keys" ("name", "key", "createdAt", "updatedAt") VALUES ('JWT_SECRET', 'Pass in 2023. Joker key @#@$#@$&^*&^', '2024-03-11T04:26:27.000Z', '2024-03-11T04:26:27.000Z');
+INSERT INTO "keys" ("name", "key", "createdAt", "updatedAt") VALUES ('API_KEY_LD', 'Gr8pGZ2mrMjRS5YfvWZVbIqaV', '2024-03-11T04:26:27.000Z', '2024-03-11T04:26:27.000Z');
+INSERT INTO "keys" ("name", "key", "createdAt", "updatedAt") VALUES ('BASE_URL_LD', 'https://lottery-cms.lucky6.net', '2024-03-11T04:26:27.000Z', '2024-03-11T04:26:27.000Z');
+
