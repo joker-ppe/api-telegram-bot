@@ -571,11 +571,11 @@ export class ReportService implements OnModuleInit {
 
       console.log(JSON.stringify(weekInfo));
 
-      // await this.getWinLoseCron(weekInfo.startDate, currentDateString);
+      await this.getWinLoseCron(weekInfo.startDate, currentDateString);
 
       // await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
 
-      await this.getWinLoseCron('2024-01-01', currentDateString);
+      // await this.getWinLoseCron('2024-01-01', currentDateString);
 
       console.log('################################');
 
