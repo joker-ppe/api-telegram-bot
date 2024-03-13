@@ -156,6 +156,8 @@ const getResultXsmb = async () => {
   const prize7Item3 = document
     .querySelector('.v-g7-3')
     .innerHTML.replaceAll('...', '')
+    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('</span>', '')
     .trim();
 
   // console.log(prize7Item0, prize7Item1, prize7Item2, prize7Item3);
@@ -387,11 +389,11 @@ function checkDeDuoi(strNumber: string, result: string): boolean {
   return getTwoLastDigits(strNumber) === getTwoLastDigits(result);
 }
 
-// kiểm tra Lô Đầu
-function checkLoDau(strNumber: string, results: Array<string>): number {
+// kiểm tra Lô Đầu/ Đuôi
+function checkLo(strNumber: string, results: string[]): number {
   let time = 0;
   for (let i = 0; i < results.length; i++) {
-    if (getTwoFirstDigits(strNumber) === getTwoFirstDigits(results[i])) {
+    if (strNumber === results[i]) {
       time++;
     }
   }
@@ -399,33 +401,43 @@ function checkLoDau(strNumber: string, results: Array<string>): number {
 }
 
 // kiểm tra Lô Đuôi
-function checkLoDuoi(strNumber: string, results: Array<string>): number {
-  let time = 0;
+// function checkLoDuoi(strNumber: string, results: string[]): number {
+//   let time = 0;
+//   for (let i = 0; i < results.length; i++) {
+//     if (strNumber === results[i]) {
+//       time++;
+//     }
+//   }
+//   return time;
+// }
+
+// check xiên
+function checkXien(strNumber: string, results: string[]) {
   for (let i = 0; i < results.length; i++) {
-    if (getTwoLastDigits(strNumber) === getTwoLastDigits(results[i])) {
-      time++;
+    if (strNumber === results[i]) {
+      return true;
     }
   }
-  return time;
+  return false;
 }
 
 // kiểm tra xiên 2
 function checkXien2(
   strNumber1: string,
   strNumber2: string,
-  results: Array<string>,
+  results: string[],
 ): boolean {
   let resultNumber1 = false;
   let resultNumber2 = false;
 
   for (let i = 0; i < results.length; i++) {
-    if (getTwoLastDigits(strNumber1) === getTwoLastDigits(results[i])) {
+    if (strNumber1 === results[i]) {
       resultNumber1 = true;
       break;
     }
   }
   for (let i = 0; i < results.length; i++) {
-    if (getTwoLastDigits(strNumber2) === getTwoLastDigits(results[i])) {
+    if (strNumber2 === results[i]) {
       resultNumber2 = true;
       break;
     }
@@ -574,18 +586,39 @@ function getResultXien4(ketQuaLoDuoi: Array<string>) {
   return ketQuaXien4;
 }
 
+function getHourMinute() {
+  const date = new Date();
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: 'Asia/Bangkok',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  };
+  const formatter = new Intl.DateTimeFormat([], options);
+
+  const timeParts = formatter.formatToParts(date);
+  const currentHour = timeParts.find((part) => part.type === 'hour').value;
+  const currentMinute = timeParts.find((part) => part.type === 'minute').value;
+
+  return {
+    currentHour: currentHour,
+    currentMinute: currentMinute,
+  };
+}
+
 export default {
   getResultXsmb,
   getTwoFirstDigits,
   getTwoLastDigits,
   checkDeDau,
   checkDeDuoi,
-  checkLoDau,
-  checkLoDuoi,
+  checkLo,
   checkXien2,
+  checkXien,
   checkXien3,
   checkXien4,
   convertDateFormatApi,
   getCurrentDateFormatApi,
   getCurrentDate,
+  getHourMinute,
 };
