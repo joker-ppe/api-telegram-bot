@@ -50,6 +50,7 @@ export class ReportService implements OnModuleInit {
   async handleCron() {
     if (process.env.INSTANCE_ROLE === 'cron') {
       // Chạy cron job
+      // await this.fetchAndStoreBets();
       // console.log('I am a Cron job instance');
       const timeData = xsmb.getHourMinute();
 
@@ -137,7 +138,7 @@ export class ReportService implements OnModuleInit {
     // await this.fetchAndStoreBets();
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS, { name: 'fetchResultsXsmb' }) // Đặt tần suất cập nhật theo nhu cầu
+  @Cron(CronExpression.EVERY_5_SECONDS, { name: 'fetchResultsXsmb' }) // Đặt tần suất cập nhật theo nhu cầu
   async cronFetchResultsXsmb() {
     if (process.env.INSTANCE_ROLE === 'cron') {
       // Chạy cron job
