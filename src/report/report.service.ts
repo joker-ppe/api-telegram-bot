@@ -89,8 +89,7 @@ export class ReportService implements OnModuleInit {
               });
             if (todayResult && todayResult.done) {
               console.log('Today result is done');
-              // gửi thông báo hoàn chỉnh
-              await this.sendReportToTelegram();
+
               // tính tiền thắng thua
               // const listAdmins = JSON.parse(dataDate.adminDataToDay).listAdmins;
               const betFullData = JSON.parse(dataDate.data);
@@ -120,6 +119,9 @@ export class ReportService implements OnModuleInit {
               });
 
               console.log('################################');
+
+              // gửi thông báo hoàn chỉnh
+              await this.sendReportToTelegram();
 
               await this.getAdminInfo(dataDate.date);
             } else {
