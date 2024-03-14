@@ -720,8 +720,8 @@ export class ReportService implements OnModuleInit {
     textReport += `Tổng toang toàn sàn: ${totalLost.toLocaleString()}\n`;
     textReport += `=> ${(totalAmount - totalLost).toLocaleString()}`;
 
-    console.log(textReport);
-    // await this.sendMessage(textReport);
+    // console.log(textReport);
+    await this.sendMessage(textReport);
   }
 
   async calculatorResult(betFullData: BetItem[]) {
