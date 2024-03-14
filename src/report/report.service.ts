@@ -123,12 +123,16 @@ export class ReportService implements OnModuleInit {
                 console.log('################################');
 
                 await this.getAdminInfo(dataDate.date);
+              } else {
+                console.log('Today result is not done');
               }
             }
           } else {
             console.log('Data is not synced');
             await this.fetchAndStoreBets();
           }
+        } else {
+          console.log('Wrong data date');
         }
       }
     } else {
