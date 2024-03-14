@@ -85,7 +85,7 @@ export class ReportService implements OnModuleInit {
               const todayResult =
                 await this.prismaService.resultLottery.findUnique({
                   where: {
-                    date: xsmb.getCurrentDate(),
+                    date: xsmb.getCurrentDateFormatApi(),
                   },
                 });
               if (todayResult && todayResult.done) {
