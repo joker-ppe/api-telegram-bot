@@ -81,51 +81,49 @@ export class ReportService implements OnModuleInit {
             dataFromServer.totalPage === dataDate.lastTotalPage
           ) {
             console.log('Data is synced');
-            if (dataDate && dataDate.done) {
-              const todayResult =
-                await this.prismaService.resultLottery.findUnique({
-                  where: {
-                    date: xsmb.getCurrentDate(),
-                  },
-                });
-              if (todayResult && todayResult.done) {
-                console.log('Today result is done');
-                // gửi thông báo hoàn chỉnh
-                await this.sendReportToTelegram();
-                // tính tiền thắng thua
-                // const listAdmins = JSON.parse(dataDate.adminDataToDay).listAdmins;
-                const betFullData = JSON.parse(dataDate.data);
-                const betDataUpdate = await this.calculatorResult(betFullData);
+            const todayResult =
+              await this.prismaService.resultLottery.findUnique({
+                where: {
+                  date: xsmb.getCurrentDate(),
+                },
+              });
+            if (todayResult && todayResult.done) {
+              console.log('Today result is done');
+              // gửi thông báo hoàn chỉnh
+              await this.sendReportToTelegram();
+              // tính tiền thắng thua
+              // const listAdmins = JSON.parse(dataDate.adminDataToDay).listAdmins;
+              const betFullData = JSON.parse(dataDate.data);
+              const betDataUpdate = await this.calculatorResult(betFullData);
 
-                // update data bet
-                await this.prismaService.data.update({
-                  where: {
-                    date: dataDate.date,
-                  },
-                  data: {
-                    data: JSON.stringify(betDataUpdate),
-                  },
-                });
+              // update data bet
+              await this.prismaService.data.update({
+                where: {
+                  date: dataDate.date,
+                },
+                data: {
+                  data: JSON.stringify(betDataUpdate),
+                },
+              });
 
-                // update admin data
-                await this.updateAdminData(dataDate.date);
+              // update admin data
+              await this.updateAdminData(dataDate.date);
 
-                // xác nhận DONE
-                await this.prismaService.data.update({
-                  where: {
-                    date: dataDate.date,
-                  },
-                  data: {
-                    done: true,
-                  },
-                });
+              // xác nhận DONE
+              await this.prismaService.data.update({
+                where: {
+                  date: dataDate.date,
+                },
+                data: {
+                  done: true,
+                },
+              });
 
-                console.log('################################');
+              console.log('################################');
 
-                await this.getAdminInfo(dataDate.date);
-              } else {
-                console.log('Today result is not done');
-              }
+              await this.getAdminInfo(dataDate.date);
+            } else {
+              console.log('Today result is not done');
             }
           } else {
             console.log('Data is not synced');
