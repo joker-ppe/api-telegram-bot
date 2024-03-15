@@ -132,7 +132,7 @@ export class ReportService implements OnModuleInit {
             await this.fetchAndStoreBets();
           }
         } else {
-          console.log('Wrong data date');
+          console.log(`'fetchAndStoreBets' is done`);
         }
       }
     } else {
