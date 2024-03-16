@@ -355,6 +355,7 @@ function getCurrentDate(): string {
   const year = date.getFullYear();
 
   return `${day}-${month}-${year}`;
+  // return '15-3-2024';
 }
 
 function getCurrentDateFormatApi(): string {
@@ -364,6 +365,7 @@ function getCurrentDateFormatApi(): string {
   const year = date.getFullYear();
 
   return `${year}-${month}-${day}`;
+  // return '2024-03-15';
 }
 
 function convertDateFormatApi(date: string): string {
@@ -604,6 +606,11 @@ function getHourMinute() {
     currentHour: currentHour,
     currentMinute: currentMinute,
   };
+
+  // return {
+  //   currentHour: '18',
+  //   currentMinute: '31',
+  // };
 }
 
 export default {
