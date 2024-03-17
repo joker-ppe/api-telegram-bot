@@ -15,6 +15,7 @@ export class ReportService implements OnModuleInit {
 
   private token = '6695572072:AAGxx6Rn8wyTshwhFfOnfSY6AKfhSvJIa6o'; // Replace with your Telegram bot's token
   private chatId = '-1002109063811';
+  // private chatId = '-1002057517983';
 
   private outstandingData = new Map<string, number>();
 
@@ -66,7 +67,7 @@ export class ReportService implements OnModuleInit {
   //   try {
   //     this.isRunningCron = true;
   //
-  //     if (process.env.INSTANCE_ROLE === 'cron') {
+  //     if (process.env.INSTANCE_ROLE !== 'cron') {
   //       // Chạy cron job
   //       await this.fetchAndStoreBets();
   //       // console.log('I am a Cron job instance');
@@ -208,6 +209,8 @@ export class ReportService implements OnModuleInit {
 
         const currentHour = parseInt(timeData.currentHour);
         const currentMinute = parseInt(timeData.currentMinute);
+        // const currentHour = 18;
+        // const currentMinute = 18;
         if (currentHour === 18 && currentMinute >= 15 && currentMinute <= 40) {
           await this.fetchResultsXsmb();
         } else {
@@ -763,8 +766,8 @@ export class ReportService implements OnModuleInit {
     textReport += `Tổng toang toàn sàn: ${totalLost.toLocaleString()}\n`;
     textReport += `=> ${(totalAmount - totalLost).toLocaleString()}`;
 
-    // console.log(textReport);
-    await this.sendMessage(textReport);
+    console.log(textReport);
+    // await this.sendMessage(textReport);
   }
 
   async calculatorResult(betFullData: BetItem[]) {
@@ -1659,78 +1662,78 @@ export class ReportService implements OnModuleInit {
       } else {
         console.log('==> No need update number row');
 
-        // let currentDataDate = await this.prismaService.data.findUnique({
-        //   where: {
-        //     date: date,
-        //   },
-        // });
-        //
-        // if (!currentDataDate) {
-        //   currentDataDate = {
-        //     date: date,
-        //     lastTotalPage: 1,
-        //     lastTotalRow: 0,
-        //     data: null,
-        //     adminDataToDay: null,
-        //     adminDataThisWeek: null,
-        //     adminDataTet: null,
-        //     done: false,
-        //     createdAt: new Date(),
-        //     updatedAt: new Date(),
-        //   };
-        // }
-        //
-        // if (
-        //   !currentDataDate.data ||
-        //   currentDataDate.data === 'null' ||
-        //   currentDataDate.data === '[]'
-        // ) {
-        // } else {
-        //   const itemInDb = JSON.parse(currentDataDate.data)[0];
-        //
-        //   if (itemInDb.status === 0) {
-        //     console.log('==> Need update status record');
-        //     if (betData.sampleData.status === 1) {
-        //       console.log('==> Have results from server.........');
-        //
-        //       await this.sendMessage(
-        //         `Sync at: ${this.getCurrentDateTimeString()}\n${date} ==> Have results from server.........'`,
-        //       );
-        //
-        //       if (currentDataDate.data) {
-        //         console.log(
-        //           '==> Delete data on db ......... Wait next cron time',
-        //         );
-        //         // xóa kết quả ngày hôm đó
-        //         await this.prismaService.data.delete({
-        //           where: {
-        //             date: date,
-        //           },
-        //         });
-        //       }
-        //     } else {
-        //       console.log('==> Do not have results from server.........');
-        //
-        //       console.log('==> Check admin data...');
-        //       // check admin data
-        //       if (!currentDataDate.adminDataToDay) {
-        //         await this.updateAdminData(date);
-        //       } else {
-        //         console.log('==> No need update admin data...');
-        //       }
-        //     }
-        //   } else {
-        //     console.log('==> No need update status record');
-        //
-        //     console.log('==> Check admin data...');
-        //     // check admin data
-        //     if (!currentDataDate.adminDataToDay) {
-        //       await this.updateAdminData(date);
-        //     } else {
-        //       console.log('==> No need update admin data...');
-        //     }
-        //   }
-        // }
+        let currentDataDate = await this.prismaService.data.findUnique({
+          where: {
+            date: date,
+          },
+        });
+
+        if (!currentDataDate) {
+          currentDataDate = {
+            date: date,
+            lastTotalPage: 1,
+            lastTotalRow: 0,
+            data: null,
+            adminDataToDay: null,
+            adminDataThisWeek: null,
+            adminDataTet: null,
+            done: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+        }
+
+        if (
+          !currentDataDate.data ||
+          currentDataDate.data === 'null' ||
+          currentDataDate.data === '[]'
+        ) {
+        } else {
+          const itemInDb = JSON.parse(currentDataDate.data)[0];
+
+          if (itemInDb.status === 0) {
+            console.log('==> Need update status record');
+            if (betData.sampleData.status === 1) {
+              console.log('==> Have results from server.........');
+
+              await this.sendMessage(
+                `Sync at: ${this.getCurrentDateTimeString()}\n${date} ==> Have results from server.........'`,
+              );
+
+              if (currentDataDate.data) {
+                console.log(
+                  '==> Delete data on db ......... Wait next cron time',
+                );
+                // xóa kết quả ngày hôm đó
+                await this.prismaService.data.delete({
+                  where: {
+                    date: date,
+                  },
+                });
+              }
+            } else {
+              console.log('==> Do not have results from server.........');
+
+              console.log('==> Check admin data...');
+              // check admin data
+              if (!currentDataDate.adminDataToDay) {
+                await this.updateAdminData(date);
+              } else {
+                console.log('==> No need update admin data...');
+              }
+            }
+          } else {
+            console.log('==> No need update status record');
+
+            console.log('==> Check admin data...');
+            // check admin data
+            if (!currentDataDate.adminDataToDay) {
+              await this.updateAdminData(date);
+            } else {
+              console.log('==> No need update admin data...');
+            }
+          }
+        }
       }
     }
   }
