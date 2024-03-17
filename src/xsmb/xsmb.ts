@@ -20,68 +20,78 @@ const getResultXsmb = async () => {
   const prizeDB = document
     .querySelector('.v-gdb')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   // console.log(prizeDB);
 
   const prize1 = document
     .querySelector('.v-g1')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   // console.log(prize1);
 
   const prize2Item0 = document
     .querySelector('.v-g2-0')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize2Item1 = document
     .querySelector('.v-g2-1')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   // console.log(prize2Item0, prize2Item1);
 
   const prize3Item0 = document
     .querySelector('.v-g3-0')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize3Item1 = document
     .querySelector('.v-g3-1')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize3Item2 = document
     .querySelector('.v-g3-2')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize3Item3 = document
     .querySelector('.v-g3-3')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize3Item4 = document
     .querySelector('.v-g3-4')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize3Item5 = document
     .querySelector('.v-g3-5')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
 
   // console.log(
@@ -96,26 +106,30 @@ const getResultXsmb = async () => {
   const prize4Item0 = document
     .querySelector('.v-g4-0')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize4Item1 = document
     .querySelector('.v-g4-1')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize4Item2 = document
     .querySelector('.v-g4-2')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize4Item3 = document
     .querySelector('.v-g4-3')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
 
   // console.log(prize4Item0, prize4Item1, prize4Item2, prize4Item3);
@@ -123,38 +137,44 @@ const getResultXsmb = async () => {
   const prize5Item0 = document
     .querySelector('.v-g5-0')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize5Item1 = document
     .querySelector('.v-g5-1')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize5Item2 = document
     .querySelector('.v-g5-2')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize5Item3 = document
     .querySelector('.v-g5-3')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize5Item4 = document
     .querySelector('.v-g5-4')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize5Item5 = document
     .querySelector('.v-g5-5')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
 
   // console.log(
@@ -169,20 +189,23 @@ const getResultXsmb = async () => {
   const prize6Item0 = document
     .querySelector('.v-g6-0')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize6Item1 = document
     .querySelector('.v-g6-1')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize6Item2 = document
     .querySelector('.v-g6-2')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
 
   // console.log(prize6Item0, prize6Item1, prize6Item2);
@@ -190,26 +213,30 @@ const getResultXsmb = async () => {
   const prize7Item0 = document
     .querySelector('.v-g7-0')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize7Item1 = document
     .querySelector('.v-g7-1')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize7Item2 = document
     .querySelector('.v-g7-2')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
   const prize7Item3 = document
     .querySelector('.v-g7-3')
     .innerHTML.replaceAll('...', '')
-    .replaceAll('<span class="cl-red"', '')
+    .replaceAll('<span class="cl-red">', '')
     .replaceAll('</span>', '')
+    .replaceAll('>', '')
     .trim();
 
   // console.log(prize7Item0, prize7Item1, prize7Item2, prize7Item3);

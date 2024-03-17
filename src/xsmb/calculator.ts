@@ -229,11 +229,11 @@ async function getWinLoseCron(
   endDate: string,
   prismaService: any,
 ) {
-  console.log(`Current date: ${this.getCurrentDateString()}`);
+  console.log(`Current date: ${getCurrentDateString()}`);
 
   // const currentDateString = `${year}-${month}-${day}`;
 
-  const uniqueDatesSearch = this.generateDateRange(startDate, endDate);
+  const uniqueDatesSearch = generateDateRange(startDate, endDate);
   console.log(uniqueDatesSearch);
 
   // let betFullData: BetItem[] = [];
@@ -426,7 +426,45 @@ async function getWinLoseCron(
   }
 }
 
+function getCurrentDateString(): string {
+  const currentDate = new Date();
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Bangkok',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const formattedDate = formatter.format(currentDate);
+
+  console.log(`Fetching at ${formattedDate}`);
+
+  const parts = formatter.formatToParts(currentDate);
+
+  const year = parts.find((part) => part.type === 'year').value;
+  const month = parts.find((part) => part.type === 'month').value;
+  const day = parts.find((part) => part.type === 'day').value;
+
+  return `${year}-${month}-${day}`;
+}
+
+function generateDateRange(startDate: string, endDate: string) {
+  const dates = [];
+  const currentDate = new Date(startDate);
+  const end = new Date(endDate);
+
+  while (currentDate <= end) {
+    dates.push(currentDate.toISOString().split('T')[0]);
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return dates;
+}
+
 export default {
   getWinLoseTest,
-  getWinLoseCron,
+  // getWinLoseCron,
 };
