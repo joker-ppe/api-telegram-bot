@@ -224,6 +224,209 @@ function findUser(listAdmins: User[], userName: string): User | undefined {
   return undefined;
 }
 
+async function getWinLoseCron(
+  startDate: string,
+  endDate: string,
+  prismaService: any,
+) {
+  console.log(`Current date: ${this.getCurrentDateString()}`);
+
+  // const currentDateString = `${year}-${month}-${day}`;
+
+  const uniqueDatesSearch = this.generateDateRange(startDate, endDate);
+  console.log(uniqueDatesSearch);
+
+  // let betFullData: BetItem[] = [];
+  for (let i = 0; i < uniqueDatesSearch.length; i++) {
+    const date = uniqueDatesSearch[i];
+    console.log('*******************\nChecking data date: ' + date);
+
+    // let hasResultBet = false;
+
+    let dataDate = await prismaService.data.findUnique({
+      where: {
+        date: date,
+      },
+    });
+
+    // console.log(`${date} - ${JSON.stringify(dataDate)}`);,
+
+    if (!dataDate) {
+      dataDate = {
+        date: date,
+        lastTotalPage: 1,
+        lastTotalRow: -1,
+        data: null,
+        adminDataToDay: null,
+        adminDataThisWeek: null,
+        adminDataTet: null,
+        done: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    }
+
+    let lastData = JSON.parse(dataDate.data);
+
+    if (!dataDate.data || dataDate.data === 'null' || dataDate.data === '[]') {
+      lastData = [];
+    }
+
+    console.log(`Current total page on db: ${dataDate.lastTotalPage}`);
+    console.log(`Current total row on db: ${dataDate.lastTotalRow}`);
+    console.log(`Current data size on db: ${lastData.length}`);
+
+    const betData = await this.getBetDataCron(
+      date,
+      date,
+      'betLog',
+      dataDate.lastTotalPage,
+      dataDate.lastTotalRow,
+    );
+
+    if (betData.needUpdate) {
+      console.log(`results new data: ${betData.betData.length}`);
+      // console.log(`results new data: ${JSON.stringify(betData.betData)}`);
+      const newData = betData.betData.filter(
+        (item: BetItem) =>
+          !lastData.some((lastItem: BetItem) => lastItem.code === item.code),
+      );
+      console.log(`new data no duplicated: ${newData.length}`);
+
+      const dateData = lastData.concat(newData);
+
+      if (dateData.length === betData.rowCount) {
+        dataDate.data = JSON.stringify(dateData);
+        dataDate.lastTotalPage = betData.totalPage;
+        dataDate.lastTotalRow = betData.rowCount;
+
+        const currentDataDate = await prismaService.data.findUnique({
+          where: {
+            date: date,
+          },
+        });
+
+        if (currentDataDate) {
+          await prismaService.data.update({
+            where: {
+              date: date,
+            },
+            data: {
+              data: dataDate.data,
+              lastTotalPage: dataDate.lastTotalPage,
+              lastTotalRow: dataDate.lastTotalRow,
+            },
+          });
+        } else {
+          await prismaService.data.create({
+            data: {
+              date: date,
+              data: dataDate.data,
+              lastTotalPage: dataDate.lastTotalPage,
+              lastTotalRow: dataDate.lastTotalRow,
+            },
+          });
+        }
+
+        console.log(
+          `Updated new data: total page now = ${dataDate.lastTotalPage}, total row now = ${dataDate.lastTotalRow}`,
+        );
+
+        // update admin data
+        await this.updateAdminData(date);
+
+        // await this.sendMessage(
+        //   `Sync at: ${formattedDate}\n${date} => New record: ${newData.length} - Total record now: ${dataDate.lastTotalRow}`,
+        // );
+      } else {
+        console.error(
+          `Không khớp số lượng bet data: new dateData: ${dateData.length} - rowCount: ${betData.rowCount}`,
+        );
+
+        // alert(`Có lỗi xảy ra. Load lại trang`);
+
+        // return last_data; // Or handle this case as needed
+      }
+    } else {
+      console.log('==> No need update number row');
+
+      let currentDataDate = await prismaService.data.findUnique({
+        where: {
+          date: date,
+        },
+      });
+
+      if (!currentDataDate) {
+        currentDataDate = {
+          date: date,
+          lastTotalPage: 1,
+          lastTotalRow: 0,
+          data: null,
+          adminDataToDay: null,
+          adminDataThisWeek: null,
+          adminDataTet: null,
+          done: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+      }
+
+      if (
+        !currentDataDate.data ||
+        currentDataDate.data === 'null' ||
+        currentDataDate.data === '[]'
+      ) {
+      } else {
+        const itemInDb = JSON.parse(currentDataDate.data)[0];
+
+        if (itemInDb.status === 0) {
+          console.log('==> Need update status record');
+          if (betData.sampleData.status === 1) {
+            console.log('==> Have results from server.........');
+
+            await this.sendMessage(
+              `Sync at: ${this.getCurrentDateTimeString()}\n${date} ==> Have results from server.........'`,
+            );
+
+            if (currentDataDate.data) {
+              console.log(
+                '==> Delete data on db ......... Wait next cron time',
+              );
+              // xóa kết quả ngày hôm đó
+              await prismaService.data.delete({
+                where: {
+                  date: date,
+                },
+              });
+            }
+          } else {
+            console.log('==> Do not have results from server.........');
+
+            console.log('==> Check admin data...');
+            // check admin data
+            if (!currentDataDate.adminDataToDay) {
+              await this.updateAdminData(date);
+            } else {
+              console.log('==> No need update admin data...');
+            }
+          }
+        } else {
+          console.log('==> No need update status record');
+
+          console.log('==> Check admin data...');
+          // check admin data
+          if (!currentDataDate.adminDataToDay) {
+            await this.updateAdminData(date);
+          } else {
+            console.log('==> No need update admin data...');
+          }
+        }
+      }
+    }
+  }
+}
+
 export default {
   getWinLoseTest,
+  getWinLoseCron,
 };
