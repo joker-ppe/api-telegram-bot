@@ -49,7 +49,10 @@ export class ReportService implements OnModuleInit {
 
   @Cron(CronExpression.EVERY_10_SECONDS, { name: 'fetchAndStoreBets' }) // Đặt tần suất cập nhật theo nhu cầu
   async handleCron() {
-    if (process.env.INSTANCE_ROLE === 'cron') {
+    if (
+      process.env.INSTANCE_ROLE === 'cron' &&
+      this.chatId === '-1002109063811'
+    ) {
       console.log('\n----------------------------------------------------\n');
 
       if (this.isRunningCron) {
@@ -69,146 +72,157 @@ export class ReportService implements OnModuleInit {
     }
   }
 
-  // @Cron(CronExpression.EVERY_10_SECONDS, { name: 'fetchAndStoreBetsLocal' }) // Đặt tần suất cập nhật theo nhu cầu
-  // async handleCronLocal() {
-  //   console.log('\n----------------------------------------------------\n');
-  //
-  //   if (this.isRunningCron) {
-  //     console.log('Cron job is running. Skip this time.');
-  //     return;
-  //   }
-  //
-  //   try {
-  //     this.isRunningCron = true;
-  //
-  //     if (process.env.INSTANCE_ROLE !== 'cron') {
-  //       // Chạy cron job
-  //       // await this.fetchAndStoreBetsLocal();
-  //       // console.log('I am a Cron job instance');
-  //       const timeData = xsmb.getHourMinute();
-  //
-  //       const currentHour = parseInt(timeData.currentHour);
-  //       const currentMinute = parseInt(timeData.currentMinute);
-  //
-  //       if (currentHour < 18 || (currentHour === 18 && currentMinute <= 30)) {
-  //         console.log(
-  //           `[fetchAndStoreBets] Fetching 'fetchAndStoreBets'.  Current time is ${currentHour}:${currentMinute}`,
-  //         );
-  //         // Thực hiện hành động nếu thời gian hiện tại nằm trong khoảng từ 00:00 đến 18:30
-  //         await this.fetchAndStoreBetsLocal();
-  //       } else {
-  //         console.log(
-  //           `[fetchAndStoreBets] Not in time 'fetchAndStoreBets'. Current time is ${currentHour}:${currentMinute}`,
-  //         );
-  //         // check data đã khớp so với server chưa
-  //         let dataDate = await this.prismaService.data.findUnique({
-  //           where: {
-  //             date: xsmb.getCurrentDateFormatApi(),
-  //           },
-  //         });
-  //
-  //         if (dataDate && dataDate.done === false) {
-  //           try {
-  //             const dataFromServer = await this.getConfigToCheck();
-  //             if (
-  //               dataFromServer.rowCount === dataDate.lastTotalRow &&
-  //               dataFromServer.totalPage === dataDate.lastTotalPage
-  //             ) {
-  //               console.log('[fetchAndStoreBets] Data is synced');
-  //               const todayResult =
-  //                 await this.prismaService.resultLottery.findUnique({
-  //                   where: {
-  //                     date: xsmb.getCurrentDate(),
-  //                   },
-  //                 });
-  //               if (todayResult && todayResult.done) {
-  //                 console.log('[fetchAndStoreBets] Today result is done');
-  //
-  //                 // tính tiền thắng thua
-  //                 const betFullData = JSON.parse(dataDate.data);
-  //                 const betDataUpdate =
-  //                   await this.calculatorResult(betFullData);
-  //                 // const betDataUpdate = betFullData;
-  //
-  //                 // update data bet
-  //                 dataDate = await this.prismaService.data.update({
-  //                   where: {
-  //                     date: dataDate.date,
-  //                   },
-  //                   data: {
-  //                     data: JSON.stringify(betDataUpdate),
-  //                   },
-  //                 });
-  //
-  //                 // update admin data
-  //                 dataDate = await this.updateAdminData(dataDate.date);
-  //
-  //                 // const listAdmins = JSON.parse(
-  //                 //   dataDate.adminDataToDay,
-  //                 // ).listAdmins;
-  //                 // const betData = JSON.parse(
-  //                 //   dataDate.adminDataToDay,
-  //                 // ).betFullData;
-  //                 //
-  //                 // const admin = JSON.parse(
-  //                 //   await calculator.getWinLoseTest(betData, listAdmins),
-  //                 // );
-  //                 // console.log({ admin: admin['profit'] });
-  //
-  //                 // xác nhận DONE
-  //                 await this.prismaService.data.update({
-  //                   where: {
-  //                     date: dataDate.date,
-  //                   },
-  //                   data: {
-  //                     done: true,
-  //                   },
-  //                 });
-  //
-  //                 console.log(
-  //                   '[fetchAndStoreBets] ################################',
-  //                 );
-  //
-  //                 // gửi thông báo hoàn chỉnh
-  //                 await this.sendReportToTelegram();
-  //
-  //                 await this.getAdminInfo(dataDate.date);
-  //               } else {
-  //                 console.log('[fetchAndStoreBets] Today result is not done');
-  //               }
-  //             } else {
-  //               console.log('[fetchAndStoreBets] Data is not synced');
-  //               await this.fetchAndStoreBetsLocal();
-  //             }
-  //           } catch (e) {
-  //             console.error(e);
-  //             return;
-  //           }
-  //         } else if (dataDate && dataDate.done) {
-  //           console.log(`[fetchAndStoreBets] 'fetchAndStoreBets' is done`);
-  //         } else {
-  //           console.log('[fetchAndStoreBets] Data is not synced');
-  //           await this.fetchAndStoreBetsLocal();
-  //         }
-  //       }
-  //     } else {
-  //       // console.log('Not a Cron job instance');
-  //     }
-  //   } catch (e) {
-  //     console.error(e);
-  //   } finally {
-  //     this.isRunningCron = false;
-  //     console.log(
-  //       '[fetchAndStoreBets] ===========> Done cron job\n================================',
-  //     );
-  //   }
-  //
-  //   // await this.fetchAndStoreBets();
-  // }
+  @Cron(CronExpression.EVERY_10_SECONDS, { name: 'fetchAndStoreBetsLocal' }) // Đặt tần suất cập nhật theo nhu cầu
+  async handleCronLocal() {
+    if (this.chatId !== '-1002057517983') {
+      return;
+    }
+
+    console.log('\n----------------------------------------------------\n');
+
+    if (this.isRunningCron) {
+      console.log(
+        '[fetchAndStoreBetsLocal] Cron job is running. Skip this time.',
+      );
+      return;
+    }
+
+    try {
+      this.isRunningCron = true;
+
+      if (process.env.INSTANCE_ROLE !== 'cron') {
+        // Chạy cron job
+        // await this.fetchAndStoreBetsLocal();
+        // console.log('I am a Cron job instance');
+        const timeData = xsmb.getHourMinute();
+
+        const currentHour = parseInt(timeData.currentHour);
+        const currentMinute = parseInt(timeData.currentMinute);
+
+        if (currentHour < 18 || (currentHour === 18 && currentMinute <= 30)) {
+          console.log(
+            `[fetchAndStoreBetsLocal] Fetching 'fetchAndStoreBetsLocal'.  Current time is ${currentHour}:${currentMinute}`,
+          );
+          // Thực hiện hành động nếu thời gian hiện tại nằm trong khoảng từ 00:00 đến 18:30
+          await this.fetchAndStoreBetsLocal();
+        } else {
+          console.log(
+            `[fetchAndStoreBetsLocal] Not in time 'fetchAndStoreBetsLocal'. Current time is ${currentHour}:${currentMinute}`,
+          );
+          // check data đã khớp so với server chưa
+          let dataDate = await this.prismaService.data.findUnique({
+            where: {
+              date: xsmb.getCurrentDateFormatApi(),
+            },
+          });
+
+          if (dataDate && dataDate.done === false) {
+            try {
+              const dataFromServer = await this.getConfigToCheck();
+              if (
+                dataFromServer.rowCount === dataDate.lastTotalRow &&
+                dataFromServer.totalPage === dataDate.lastTotalPage
+              ) {
+                console.log('[fetchAndStoreBetsLocal] Data is synced');
+                const todayResult =
+                  await this.prismaService.resultLottery.findUnique({
+                    where: {
+                      date: xsmb.getCurrentDate(),
+                    },
+                  });
+                if (todayResult && todayResult.done) {
+                  console.log('[fetchAndStoreBetsLocal] Today result is done');
+
+                  // tính tiền thắng thua
+                  const betFullData = JSON.parse(dataDate.data);
+                  const betDataUpdate =
+                    await this.calculatorResult(betFullData);
+                  // const betDataUpdate = betFullData;
+
+                  // update data bet
+                  dataDate = await this.prismaService.data.update({
+                    where: {
+                      date: dataDate.date,
+                    },
+                    data: {
+                      data: JSON.stringify(betDataUpdate),
+                    },
+                  });
+
+                  // update admin data
+                  dataDate = await this.updateAdminData(dataDate.date);
+
+                  // const listAdmins = JSON.parse(
+                  //   dataDate.adminDataToDay,
+                  // ).listAdmins;
+                  // const betData = JSON.parse(
+                  //   dataDate.adminDataToDay,
+                  // ).betFullData;
+                  //
+                  // const admin = JSON.parse(
+                  //   await calculator.getWinLoseTest(betData, listAdmins),
+                  // );
+                  // console.log({ admin: admin['profit'] });
+
+                  // xác nhận DONE
+                  await this.prismaService.data.update({
+                    where: {
+                      date: dataDate.date,
+                    },
+                    data: {
+                      done: true,
+                    },
+                  });
+
+                  console.log(
+                    '[fetchAndStoreBetsLocal] ################################',
+                  );
+
+                  // gửi thông báo hoàn chỉnh
+                  await this.sendReportToTelegram();
+
+                  await this.getAdminInfo(dataDate.date);
+                } else {
+                  console.log(
+                    '[fetchAndStoreBetsLocal] Today result is not done',
+                  );
+                }
+              } else {
+                console.log('[fetchAndStoreBetsLocal] Data is not synced');
+                await this.fetchAndStoreBetsLocal();
+              }
+            } catch (e) {
+              console.error(e);
+              return;
+            }
+          } else if (dataDate && dataDate.done) {
+            console.log(`[fetchAndStoreBetsLocal] 'fetchAndStoreBets' is done`);
+          } else {
+            console.log('[fetchAndStoreBetsLocal] Data is not synced');
+            await this.fetchAndStoreBetsLocal();
+          }
+        }
+      } else {
+        // console.log('Not a Cron job instance');
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      this.isRunningCron = false;
+      console.log(
+        '[fetchAndStoreBetsLocal] ===========> Done cron job\n================================',
+      );
+    }
+
+    // await this.fetchAndStoreBets();
+  }
 
   @Cron(CronExpression.EVERY_5_SECONDS, { name: 'fetchResultsXsmb' }) // Đặt tần suất cập nhật theo nhu cầu
   async cronFetchResultsXsmb() {
-    if (process.env.INSTANCE_ROLE === 'cron') {
+    if (
+      process.env.INSTANCE_ROLE === 'cron' ||
+      this.chatId === '-1002057517983'
+    ) {
       // Chạy cron job
       // console.log('I am a Cron job instance');
       if (this.isRunningCronXsmb) {
@@ -473,13 +487,13 @@ export class ReportService implements OnModuleInit {
 
       console.log(JSON.stringify(weekInfo));
 
-      await this.getWinLoseCron(weekInfo.startDate, currentDateString);
+      // await this.getWinLoseCron(weekInfo.startDate, currentDateString);
 
       // await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
 
-      // await this.getWinLoseCron('2024-01-01', currentDateString);
+      await this.getWinLoseCron('2024-03-17', currentDateString);
 
-      console.log('[fetchResultsXsmb] ################################');
+      console.log('[fetchAndStoreBets] ################################');
 
       await this.getAdminInfo(currentDateString);
 
@@ -514,7 +528,7 @@ export class ReportService implements OnModuleInit {
 
       // await this.getWinLoseCron('2024-01-01', currentDateString);
 
-      console.log('[fetchResultsXsmb] ################################');
+      console.log('[fetchAndStoreBetsLocal] ################################');
 
       await this.getAdminInfo(currentDateString);
 
@@ -1262,6 +1276,17 @@ export class ReportService implements OnModuleInit {
       await this.sendMessage(
         `Thắng thua hôm nay: ${admin.profit.toLocaleString()}`,
       );
+
+      await this.prismaService.data.update({
+        where: {
+          date: endDate,
+        },
+        data: {
+          done: true,
+        },
+      });
+
+      await this.sendReportToTelegram();
     }
 
     console.table({
