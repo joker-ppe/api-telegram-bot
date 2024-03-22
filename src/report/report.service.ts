@@ -4,6 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { BetItem, User } from './dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import xsmb from 'src/xsmb/xsmb';
+// import { writeFileSync } from 'fs';
 
 @Injectable()
 export class ReportService implements OnModuleInit {
@@ -14,7 +15,7 @@ export class ReportService implements OnModuleInit {
   private isRunningCronXsmb = false;
 
   private token = '6695572072:AAGxx6Rn8wyTshwhFfOnfSY6AKfhSvJIa6o'; // Replace with your Telegram bot's token
-  private chatId = '-1002109063811'; // javis
+  private chatId = '-1002109063811'; // jarvis
   // private chatId = '-1002057517983'; // shield
 
   private outstandingData = new Map<string, number>();
@@ -31,6 +32,12 @@ export class ReportService implements OnModuleInit {
 
   sendMessage = async (message: string) => {
     console.log(message);
+
+    if (this.chatId === '-1002057517983') {
+      this.token = '6941513260:AAEgAnqQ6N__fNvWFnU4DrROTAc7g0p4K8c';
+    } else {
+      this.token = '6695572072:AAGxx6Rn8wyTshwhFfOnfSY6AKfhSvJIa6o';
+    }
 
     const url = `https://api.telegram.org/bot${
       this.token
@@ -220,7 +227,7 @@ export class ReportService implements OnModuleInit {
   @Cron(CronExpression.EVERY_5_SECONDS, { name: 'fetchResultsXsmb' }) // Đặt tần suất cập nhật theo nhu cầu
   async cronFetchResultsXsmb() {
     if (
-      process.env.INSTANCE_ROLE === 'cron' ||
+      process.env.INSTANCE_ROLE === 'xsmb' ||
       this.chatId === '-1002057517983'
     ) {
       // Chạy cron job
@@ -487,11 +494,11 @@ export class ReportService implements OnModuleInit {
 
       console.log(JSON.stringify(weekInfo));
 
-      // await this.getWinLoseCron(weekInfo.startDate, currentDateString);
+      await this.getWinLoseCron(weekInfo.startDate, currentDateString);
 
       // await this.getWinLoseCron(lastWeekInfo.startDate, currentDateString);
 
-      await this.getWinLoseCron('2024-03-17', currentDateString);
+      // await this.getWinLoseCron('2024-03-17', currentDateString);
 
       console.log('[fetchAndStoreBets] ################################');
 
@@ -976,6 +983,7 @@ export class ReportService implements OnModuleInit {
     if (!dataDate) {
       return [];
     } else {
+      // writeFileSync(endDate + ' output.json', dataDate.data, 'utf-8');
       return dataDate.data;
     }
   }

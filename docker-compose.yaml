@@ -112,6 +112,21 @@ services:
     networks:
       - jk-nestjs-network
 
+  jk-api-cron-xsmb:
+    build: .
+    container_name: jk-api-cron-xsmb
+    restart: always
+    environment:
+      - INSTANCE_ROLE=xsmb
+      - APP_PORT=3009
+    ports:
+      - 3009:3009
+    depends_on:
+      jk-database:
+        condition: service_healthy
+    networks:
+      - jk-nestjs-network
+
 
   nginx:
     # build: ./nginx
