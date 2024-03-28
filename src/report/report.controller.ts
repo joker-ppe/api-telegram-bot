@@ -209,6 +209,25 @@ export class ReportController {
     );
   }
 
+  @Get('user/check_os_bet')
+  async CheckUserOsBet(
+    @Query('endDate') endDate: string,
+    @Query('numbers') numbers: string,
+    @Res() response: Response,
+  ) {
+    response.setHeader('Content-Type', 'application/json');
+
+    console.log('request: ', {
+      api: 'report/user/check_os_bet',
+      endDate: endDate,
+      numbers: numbers,
+    });
+
+    return response.send(
+      await this.reportService.checkUserOsBet(endDate, numbers),
+    );
+  }
+
   @Get('date')
   async GetReportNumber(
     @Query('endDate') endDate: string,

@@ -692,6 +692,29 @@ function getHourMinute() {
   // };
 }
 
+function getNameGame(type: number) {
+  switch (type) {
+    case 0:
+      return 'Đề đầu ĐB';
+    case 1:
+      return 'Đề đuôi ĐB';
+    case 2:
+      return 'Đề đầu G1';
+    case 3:
+      return 'Đề đuôi G1';
+    case 4:
+      return 'Lô đầu';
+    case 5:
+      return 'Lô đuôi';
+    case 6:
+      return 'Xiên 2';
+    case 7:
+      return 'Xiên 3';
+    case 8:
+      return 'Xiên 4';
+  }
+}
+
 export default {
   getResultXsmb,
   getTwoFirstDigits,
@@ -707,4 +730,5 @@ export default {
   getCurrentDateFormatApi,
   getCurrentDate,
   getHourMinute,
+  getNameGame,
 };

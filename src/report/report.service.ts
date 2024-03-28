@@ -2229,6 +2229,75 @@ export class ReportService implements OnModuleInit {
     return JSON.stringify(user);
   }
 
+  async checkUserOsBet(endDate: string, numbers: string) {
+    const dataDate = await this.prismaService.data.findUnique({
+      where: {
+        date: endDate,
+      },
+    });
+
+    if (!dataDate) {
+      return new NotFoundException();
+    }
+
+    const data = JSON.parse(dataDate.adminDataToDay);
+    const users = data.listAdmins[0].children
+      .flatMap((sup: { children: any[] }) =>
+        sup.children.flatMap((master) =>
+          master.children.flatMap((agent: { children: any }) => agent.children),
+        ),
+      )
+      .filter(
+        (user: { profit: number; outstanding: number }) =>
+          user.profit !== 0 || user.outstanding !== 0,
+      );
+
+    // const sumOfProfit = users.reduce(
+    //   (totalProfit, user) => totalProfit + user.outstanding,
+    //   0,
+    // );
+
+    const members = [];
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      const userData = JSON.parse(
+        await this.getWinLose(endDate, endDate, user.full_name),
+      );
+      members.push(userData);
+    }
+
+    const listNumbers = numbers
+      .split(',')
+      .map((number) => number.trim())
+      .sort();
+
+    // console.log('listNumbers:', listNumbers.toString());
+
+    const result = [];
+    for (let i = 0; i < members.length; i++) {
+      const member = members[i];
+      for (let j = 0; j < Object.keys(member.data_bet).length; j++) {
+        const gameData = member.data_bet[Object.keys(member.data_bet)[j]];
+        const listNumberGame = gameData.listNumber
+          .map((item: { number: any }) => item.number)
+          .sort();
+
+        const isMatch = listNumberGame
+          .toString()
+          .includes(listNumbers.toString());
+
+        if (isMatch) {
+          result.push({
+            line: member.line,
+            game: Object.keys(member.data_bet)[j],
+          });
+        }
+      }
+    }
+
+    return result;
+  }
+
   async getConfigToCheck() {
     const config = await this.getConfigBet(
       xsmb.getCurrentDateFormatApi(),
@@ -2591,6 +2660,7 @@ export class ReportService implements OnModuleInit {
     // console.log(url);
 
     try {
+      console.log('Loading data:', url);
       const response = await fetch(url);
       const data = await response.json();
       // console.log(data);
