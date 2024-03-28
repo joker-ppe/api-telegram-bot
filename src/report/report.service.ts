@@ -1281,10 +1281,6 @@ export class ReportService implements OnModuleInit {
     if (currentOutstanding === 0 && oldOutstanding !== 0) {
       this.outstandingData.set(endDate, 0);
 
-      await this.sendMessage(
-        `Thắng thua hôm nay: ${admin.profit.toLocaleString()}`,
-      );
-
       await this.prismaService.data.update({
         where: {
           date: endDate,
@@ -1295,6 +1291,10 @@ export class ReportService implements OnModuleInit {
       });
 
       await this.sendReportToTelegram();
+
+      await this.sendMessage(
+        `Thắng thua hôm nay: ${admin.profit.toLocaleString()}`,
+      );
     }
 
     console.table({
