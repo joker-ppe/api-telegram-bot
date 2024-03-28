@@ -2297,7 +2297,7 @@ export class ReportService implements OnModuleInit {
       }
     }
 
-    return result;
+    return result.sort((a, b) => b.point - a.point);
   }
 
   async getConfigToCheck() {
