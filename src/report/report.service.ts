@@ -4,7 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { BetItem, User } from './dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import xsmb from 'src/xsmb/xsmb';
-// import { writeFileSync } from 'fs';
+import { writeFileSync } from 'fs';
 
 @Injectable()
 export class ReportService implements OnModuleInit {
@@ -2290,6 +2290,8 @@ export class ReportService implements OnModuleInit {
           result.push({
             line: member.line,
             game: Object.keys(member.data_bet)[j],
+            point: gameData.point,
+            amount: gameData.amount,
           });
         }
       }
